@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Only this app's own scripts may run. It may only talk to secure (https / wss) services. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <title>Leaf Dash</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">Leaf<span>Dash</span></div>
+    <div class="top-right">
+      <button id="status" class="status off" aria-label="Connection status"><i></i><span>Disconnected</span></button>
+      <button id="btnSettings" class="icon-btn" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+    </div>
+  </header>
+
+  <div id="connectBar" class="connect-bar">
+    <button id="btnConnect" class="btn primary">Connect adapter</button>
+    <button id="btnDemo" class="btn ghost">Demo</button>
+  </div>
+  <div id="noBt" class="notice hidden">
+    Web Bluetooth isn't available in this browser, so only <b>Demo</b> works here. Use <b>Chrome</b>, <b>Samsung Internet</b>, <b>Edge</b> or <b>Opera</b> on Android, Windows or Mac (on Linux, enable Chrome's Web Bluetooth flag). Firefox and Safari can't; on iPhone/iPad try <b>Bluefy</b>.
+  </div>
+
+  <div class="powerstrip">
+    <div class="ps-row">
+      <div class="ps-kw"><span id="kw">0</span><small>kW</small></div>
+      <div class="ps-badges">
+        <div id="driveMode" class="pill gear hidden">D</div>
+        <div id="ecoMode" class="pill eco hidden">ECO</div>
+        <div id="kwMode" class="pill">Idle</div>
+      </div>
+    </div>
+    <div class="ps-bar">
+      <div class="ps-zero"></div>
+      <div id="kwBar"></div>
+      <div id="pkRegen" class="ps-peak"></div>
+      <div id="pkDrive" class="ps-peak"></div>
+    </div>
+    <div class="ps-scale"><span id="scMin">-50</span><span>0</span><span id="scMax">100</span></div>
+  </div>
+
+  <!-- gentle alerts: one quiet line, never a pop-up -->
+  <div id="alertBar" class="alert-bar hidden" role="status"><i></i><span></span><em></em><button aria-label="Dismiss">✕</button></div>
+
+  <main>
+    <!-- DRIVE -->
+    <section id="view-drive" class="view active">
+      <div class="scene" id="drive">
+        <canvas id="road"></canvas>
+        <div class="car" id="car"></div>
+        <button class="drive-set" id="btnDriveSettings" aria-label="Drive screen settings">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>
+        </button>
+        <div id="gearBig" class="gear-big"></div>
+        <div id="driveTag" class="drive-tag"></div>
+        <div id="epedalTag" class="drive-tag epedal">e-Pedal</div>
+        <div class="speed">
+          <div><span id="spd">--</span><small id="spdUnit">mph</small></div>
+          <div class="spd-src" id="spdSrc">no speed yet</div>
+          <div id="roadSign" class="road-sign hidden">30</div>
+          <div id="roadNext" class="road-next hidden"></div>
+        </div>
+        <div id="roadName" class="road-name hidden"></div>
+        <div id="chargeInfo" class="charge-info"></div>
+        <div id="osmCredit" class="osm-credit hidden">© OpenStreetMap contributors</div>
+        <div class="drive-info">
+          <div><b>--</b><span></span></div>
+          <div><b>--</b><span></span></div>
+          <div><b>--</b><span></span></div>
+          <div><b>--</b><span></span></div>
+        </div>
+      </div>
+      <!-- extra stats beside the scene on wide landscape screens -->
+      <aside class="drive-side">
+        <div class="tile"><div class="label">Battery</div><div class="val"><span id="dsSoc">--</span><small>%</small></div><div class="mini" id="dsSoh">SOH --%</div></div>
+        <div class="tile"><div class="label">Pack</div><div class="val"><span id="dsVolt">--</span><small>V</small></div><div class="mini" id="dsAmps">-- A</div></div>
+        <div class="tile"><div class="label">Cell spread</div><div class="val"><span id="dsSpread">--</span><small>mV</small></div><div class="mini" id="dsCells">&nbsp;</div></div>
+        <div class="tile"><div class="label">Trip</div><div class="val"><span id="dsUsed">0.00</span><small>kWh used</small></div><div class="mini" id="dsRegen">0.00 kWh regen</div></div>
+        <div class="tile"><div class="label">12V battery</div><div class="val"><span id="dsAux">--</span><small>V</small></div><div class="mini" id="ds12A">&nbsp;</div></div>
+        <div class="tile"><div class="label">Outside</div><div class="val"><span id="dsAmb">--</span><small>°C</small></div><div class="mini" id="dsGom">dash range --</div></div>
+      </aside>
+    </section>
+
+    <!-- DASHBOARD (customisable) -->
+    <section id="view-dash" class="view">
+      <div class="dash-bar">
+        <div class="label">Dashboard</div>
+        <div class="dash-actions">
+          <button class="btn ghost small hidden" id="btnDashAdd">+ Add tile</button>
+          <button class="btn ghost small" id="btnDashEdit">Edit</button>
+        </div>
+      </div>
+      <div id="dash" class="dash"></div>
+    </section>
+
+    <!-- ENERGY -->
+    <section id="view-energy" class="view">
+      <div class="card">
+        <div class="row-between">
+          <div class="label">Power</div>
+          <div class="seg" id="range">
+            <button data-min="1">1m</button><button data-min="5" class="active">5m</button><button data-min="15">15m</button>
+          </div>
+        </div>
+        <canvas id="energyChart"></canvas>
+        <div class="legend"><span><i class="lg-drive"></i>Drive</span><span><i class="lg-regen"></i>Regen / charge</span></div>
+      </div>
+      <div class="grid">
+        <div class="tile"><div class="label">Used</div><div class="val"><span id="eUsed">0.00</span><small>kWh</small></div></div>
+        <div class="tile"><div class="label">Regenerated</div><div class="val regen"><span id="eRegen">0.00</span><small>kWh</small></div></div>
+        <div class="tile"><div class="label">Net</div><div class="val"><span id="eNet">0.00</span><small>kWh</small></div></div>
+        <div class="tile"><div class="label">Recovered</div><div class="val"><span id="eShare">0</span><small>%</small></div></div>
+        <div class="tile"><div class="label">Peak power</div><div class="val"><span id="ePeak">0</span><small>kW</small></div></div>
+        <div class="tile"><div class="label">Peak regen</div><div class="val regen"><span id="ePeakR">0</span><small>kW</small></div></div>
+      </div>
+      <div class="row-between trip-foot">
+        <div class="mini" id="eSince">Trip started --</div>
+        <button id="btnReset" class="btn ghost small">Reset trip</button>
+      </div>
+      <div class="card" id="costCard">
+        <div class="row-between"><div class="label">Running costs</div><button id="btnPrices" class="btn ghost small">Prices</button></div>
+        <div class="stats">
+          <div><div class="label">This trip</div><div class="val sm" id="ctTrip">£0.00</div><div class="mini" id="ctTripSub">&nbsp;</div></div>
+          <div><div class="label">Per mile</div><div class="val sm"><span id="ctMile">--</span><small>p</small></div><div class="mini" id="ctMileSub">&nbsp;</div></div>
+          <div><div class="label">This month</div><div class="val sm" id="ctMonth">£0.00</div><div class="mini" id="ctMonthSub">&nbsp;</div></div>
+        </div>
+        <div class="label">Recent charges</div>
+        <div id="chgList" class="chg-list"></div>
+        <button id="btnAllCharges" class="btn ghost small hidden">All charges</button>
+      </div>
+    </section>
+
+    <!-- CELLS -->
+    <section id="view-cells" class="view">
+      <div class="card">
+        <div class="row-between"><div class="label">96 cell pairs</div><div class="pill" id="cellAvg">avg -- mV</div></div>
+        <div class="stats">
+          <div><div class="label">Min</div><div class="val sm"><span id="cMin">--</span><small>mV</small></div><div class="mini" id="cMinIdx">&nbsp;</div></div>
+          <div><div class="label">Max</div><div class="val sm"><span id="cMax">--</span><small>mV</small></div><div class="mini" id="cMaxIdx">&nbsp;</div></div>
+          <div><div class="label">Delta</div><div class="val sm"><span id="cDelta">--</span><small>mV</small></div></div>
+        </div>
+        <canvas id="cellChart"></canvas>
+      </div>
+      <div class="card">
+        <div class="label">Temperature sensors</div>
+        <div id="tempList" class="temps"></div>
+      </div>
+      <div class="card" id="healthCard">
+        <div class="row-between"><div class="label">Battery health over time</div><div class="pill" id="hhChange">just started</div></div>
+        <div class="stats">
+          <div><div class="label">Health</div><div class="val sm"><span id="hhNow">--</span><small>%</small></div></div>
+          <div><div class="label">Capacity</div><div class="val sm"><span id="hhAh">--</span><small>Ah</small></div></div>
+          <div><div class="label">Cell spread</div><div class="val sm"><span id="hhSpread">--</span><small>mV</small></div></div>
+        </div>
+        <canvas id="healthChart"></canvas>
+        <div class="row-between"><div class="mini" id="hhNote">&nbsp;</div><button id="btnHealthCsv" class="btn ghost small hidden">Export</button></div>
+      </div>
+    </section>
+
+    <!-- DEBUG -->
+    <section id="view-debug" class="view">
+      <div class="card">
+        <div class="row-between">
+          <div class="label">Health trip recording · read-only</div>
+          <div id="htStatus" class="pill">Off</div>
+        </div>
+        <p class="hint">Turn this on, then drive. It starts when you pull away and stops after 3 minutes parked in P (or when you disconnect). Cells are read every 2 s during the trip, and at the end you get a battery health report plus a raw log you can share. Reports are kept below, so you can reopen one you missed.</p>
+        <div class="row-between">
+          <label class="switch-row"><input type="checkbox" id="htArm"> <span>Record my next trip</span></label>
+          <div><button id="htStop" class="btn ghost small hidden">Stop now</button> <button id="htView" class="btn primary small hidden">View report</button></div>
+        </div>
+        <div class="label hidden" id="htPastLabel" style="margin-top:14px">Past trips</div>
+        <div id="htPast" class="chg-list"></div>
+      </div>
+      <div class="card">
+        <div class="row-between">
+          <div class="label">Raw responses (byte index : hex)</div>
+          <button id="btnCopy" class="btn ghost small">Copy all</button>
+        </div>
+        <p class="hint">Index 0 is <code>61</code>, index 1 is the group number. Compare with LeafSpy to calibrate offsets in <code>app.js</code>.</p>
+        <div id="raw" class="raw"></div>
+      </div>
+      <div class="card">
+        <div class="row-between">
+          <div class="label">Mode scanner · read-only</div>
+          <div class="pill">2018+ cars</div>
+        </div>
+        <p class="hint">Finds which of the car's values follow a light, pedal or button. Each test turns one thing on and back off, and the values that follow it are listed. Read-only requests only.</p>
+        <button id="btnModeScan" class="btn primary small">Start mode scan</button>
+      </div>
+      <div class="card">
+        <div class="row-between">
+          <div class="label">CAN sniffer · listen only</div>
+          <div class="pill" id="snStatus">Stopped</div>
+        </div>
+        <p class="hint">Silent monitor (<code>ATCSM1</code>): the adapter only listens and never transmits or acknowledges. Battery polling pauses while it runs. Bytes that just changed light up. Tap a row to see its bits.</p>
+        <div class="cmd">
+          <input id="snFilter" value="11A" placeholder="CAN ID, e.g. 11A (blank = all)" autocapitalize="characters" autocomplete="off">
+          <button id="btnSniff" class="btn primary small">Start</button>
+        </div>
+        <div id="snTable" class="sniff"></div>
+        <div id="snBits" class="bits"></div>
+      </div>
+      <div class="card">
+        <div class="label">Car data · live (all read-only 22 xx xx)</div>
+        <p class="hint">Every extra value the app reads, with the raw reply. ✱ = scaling still to be checked against LeafSpy or the dash.</p>
+        <div class="cd-list" id="cdList"></div>
+      </div>
+      <div class="card">
+        <div class="label">Send command</div>
+        <div class="cmd">
+          <input id="cmdIn" placeholder="read only, e.g. ATRV, 2101, 221156" autocapitalize="characters" autocomplete="off">
+          <button id="btnSend" class="btn primary small">Send</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Log</div>
+        <pre id="log" class="log"></pre>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button data-view="drive" class="active">Drive</button>
+    <button data-view="dash">Dash</button>
+    <button data-view="energy">Energy</button>
+    <button data-view="cells">Cells</button>
+    <button data-view="debug" class="hidden">Debug</button>
+  </nav>
+
+  <script src="cardata.js"></script>
+  <script src="settings.js"></script>
+  <script src="app.js"></script>
+  <script src="metrics.js"></script>
+  <script src="didscan.js"></script>
+  <script src="car3d.js"></script>
+  <script src="carimg.js"></script>
+  <script src="osmroad.js"></script>
+  <script src="charge.js"></script>
+  <script src="healthtrip.js"></script>
+  <script src="history.js"></script>
+  <script src="alerts.js"></script>
+  <script src="backup.js"></script>
+  <script src="drive.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="addons.js"></script>
+  <script src="demoroute.js"></script>
+  <script src="demopanel.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

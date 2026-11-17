@@ -1,0 +1,6 @@
+# GitHub Pages settings.
+# Files listed here are in the repo but are not published on the website, which only needs the app.
+exclude:
+  - CLAUDE.md
+  - _config.yml
+  - android
