@@ -203,7 +203,12 @@ function driveFrame(ts) {
   g.fillStyle = P ? mix('#ffffff', '#9fdcff', P) : '#e8eef5';
   g.shadowColor = '#7fc8ff'; g.shadowBlur = P * 14;
   const period = 10.5, dash = Math.min(period - 0.4, 4.5 * (1 + P * 5));
-  if (OG) { osmDrawLines(g, gp, OG, DR.travel - OSM.sCar, dash, fade); osmDrawFeats(g, gh, OG, fade); }
+  const scenery = SET.scenery !== false && typeof sceneryDraw === 'function';
+  if (OG) {
+    osmDrawLines(g, gp, OG, DR.travel - OSM.sCar, dash, fade);
+    if (scenery) sceneryDraw(g, gh, sceneryReal(OG), { fade, P });
+    osmDrawFeats(g, gh, OG, fade);
+  }
   else {
   // solid road edges (outer)
   for (let z = zn * 0.5; z < 150; z += 4) { quad(KL, z, z + 4.2, 0.12, 0.28 * fade(z)); quad(KR, z, z + 4.2, 0.12, 0.24 * fade(z)); }
@@ -213,6 +218,8 @@ function driveFrame(ts) {
     const z1 = zn * 0.5 + i * period - off;
     quad(LW / 2, z1, z1 + dash, 0.14, 0.9 * fade(z1));
   }
+  g.shadowBlur = 0; g.globalAlpha = 1;
+  if (scenery) sceneryDraw(g, gh, sceneryStraight(zr, KL, KR), { fade, P });
   }
   g.shadowBlur = 0; g.globalAlpha = 1;
 

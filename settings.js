@@ -13,7 +13,7 @@ const CAR_COLOURS = [
 const SET_DEFAULTS = {
   carColour: '#e6e8eb', carImage: null, carModel: 'model', warp: 'auto', units: 'mph', usableKwh: 39,
   chips: ['soc', 'range', 'eff', 'packTemp'],     // Drive screen bottom row
-  realRoad: false, demoRoute: true,
+  realRoad: false, demoRoute: true, scenery: true,
   chargeScreen: true,                              // side view with the battery while charging                                 // draw the real road shape from OpenStreetMap
   layoutMode: 'simple',                            // 'simple' | 'advanced'
   layout: null,                                    // dashboard widgets (see dashboard.js)
@@ -96,6 +96,10 @@ function openSettings(section) {
       <div class="set-group"><div class="label">Real road shape</div>
         <label class="switch-row"><span>Draw the road you're on (curves, lanes, speed limit) from OpenStreetMap</span><input type="checkbox" data-real ${SET.realRoad ? 'checked' : ''}></label>
         <p class="hint">Uses GPS and a little mobile data. Falls back to the straight road when there's no GPS or map data.</p>
+      </div>
+      <div class="set-group"><div class="label">Scenery</div>
+        <label class="switch-row"><span>Trees, hedges, houses and lamp posts beside the road</span><input type="checkbox" data-sw="scenery" ${SET.scenery !== false ? 'checked' : ''}></label>
+        <p class="hint">Drawn by the app to suit the road (town, countryside or fast road); nothing extra is downloaded.</p>
       </div>
       <div class="set-group"><div class="label">Warp effect</div>
         <div class="seg" data-g="warp"><button data-v="auto">Auto (off in ECO)</button><button data-v="always">Always</button><button data-v="off">Off</button></div>
