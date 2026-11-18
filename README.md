@@ -54,7 +54,7 @@ When the car is charging, the Drive tab switches to a side view of the car with 
 
 ## Refresh speed
 
-Speed, gear and motor power are read every cycle (about 2–3 times a second). Slower-changing values (cells, temperatures, 12 V, counters) are spread across cycles in the background, so they no longer hold the fast values up.
+Speed, gear, battery power and the brake pedal are read every cycle. On a real Bluetooth adapter that's about once a second (each request takes 70–100 ms). Slower-changing values (cells, temperatures, 12 V, odometer, dash range, tyres, counters) are spread across cycles in a short slot after the fast reads, whichever is most overdue first, so nothing gets left out. While driving, values that matter little on the move (A/C compressor, charger, plug) are read less often, which leaves room for the rest: on a typical adapter cells come round about every 15 s, temperatures every 8 s, tyres every 30 s and the odometer every minute. When parked the slot is longer.
 
 Cell readings that arrive with a missing or cut-short Bluetooth piece are now rejected instead of being shown shifted. That was what caused the wrong-looking spread and missing cells. The last good set stays on screen until a clean one arrives.
 

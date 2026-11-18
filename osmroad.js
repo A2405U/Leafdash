@@ -76,7 +76,7 @@ async function osmFetch(lat, lon) {
       OSM.fetchAt = { lat, lon }; OSM.nextTry = Date.now() + 10e3; OSM.status = '';
       OSM.busy = false;
       return;
-    } catch (e) { OSM.status = 'map data unavailable'; }
+    } catch (e) { OSM.status = 'map data unavailable'; window.LeafDash?.emit('osmerr', { server: new URL(url).host, why: String(e.message || e) }); }
   }
   OSM.nextTry = Date.now() + 60e3;            // back off, keep using what we have
   OSM.busy = false;

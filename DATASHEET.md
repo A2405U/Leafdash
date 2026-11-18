@@ -64,7 +64,7 @@ Byte positions count from the start of the reply, where byte 0 is `61` and byte 
 |---|---|---|---|---|
 | Pack current | 2–5 | signed, ÷ 1024, then sign flipped so driving is positive | A | Confirmed (sign) |
 | Pack voltage | 20–21 | ÷ 100 | V | Confirmed against cell voltages |
-| Hx | 30–31 | ÷ 102.4 | % | To check against LeafSpy |
+| Hx | 30–31 | ÷ 102.4 | % | To check against LeafSpy (reads 105.4–105.6% on a real drive, so the scaling is probably wrong) |
 | State of charge | 33–35 | ÷ 10000 | % | Confirmed |
 | Capacity | 37–39 | ÷ 10000 | Ah | Confirmed. One byte later than on 2011–17 cars |
 
@@ -105,7 +105,7 @@ Each is read with `22` followed by the identifier. Bytes count from the first da
 |---|---|---|---|---|
 | Gear | `1156` | byte 0: 1 = P, 2 = R, 3 = N, 4 = D, 7 = B | | Confirmed, including B |
 | Road speed | `121A` | bytes 0–1 signed ÷ 10 | km/h | In use |
-| Motor power | `1146` | bytes 0–1 signed × 40 ÷ 1000 | kW | In use |
+| Motor power | `1146` | bytes 0–1 signed × 40 ÷ 1000 | kW | In use, scaling to check: on a real drive it never went above exactly 80.0 kW while the battery gave 130 kW |
 | Motor speed | `1255` | bytes 0–1 signed | rpm | To check |
 | e-Pedal | `131A` | byte 0 equal to `04` means on | | In use |
 | Brake pedal pressed | `1305` | byte 0, bit `04` | | Confirmed by mode scan, 14 Nov 2026 |
@@ -153,7 +153,7 @@ The rear window heater bit (`131B`, bit `20`) was seen dropping by itself when t
 | Side and tail lights | `0E07` | byte 1, bit `10` | | Confirmed by mode scan, 14 Nov 2026. Also set with dipped and main beam |
 | Fog lights | `0E07` | byte 1, bits `20` and `40` | | Confirmed as the two fog lights. On this car the front fogs come on first and the rear fog can only be added to them, so both bits set means the rear fog is on. Which bit is front and which is rear is still to check |
 | An indicator is lit | `0E07` | byte 1, bit `80`. Flashes on and off with the lamp | | Confirmed by mode scan. The same bit for the left indicator, the right indicator and the hazards |
-| Odometer | `0E01` | bytes 0–2 | km | In use (in-car check open) |
+| Odometer | `0E01` | bytes 0–2 | km | In use (in-car check open; before 5.4b it was never read on a real link, see Polling in the README) |
 | Range shown on the dash | `0E24` | bytes 0–1 signed ÷ 10 | km | To check |
 | Tyre pressure, front right | `0E25` | byte 0 × 1.7236894 | kPa | In use |
 | Tyre pressure, front left | `0E26` | byte 0 × 1.7236894 | kPa | In use |

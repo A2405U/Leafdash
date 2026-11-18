@@ -20,7 +20,8 @@
 
    File format: JSON Lines (one JSON object per line). Each line has
    k (kind) and t (ms since the start). Kinds: head, d (car data changes),
-   cells, elm (adapter command c and reply r), gps, osm (map data), road,
+   cells, elm (adapter command c and reply r, or err), bad (a reply that came
+   back broken), gps, osm (map data), osmerr (a failed map download), road,
    app, mode, log, err, end.
    ===================================================================== */
 
@@ -112,7 +113,7 @@ function recApp() {
   try { const L = carLights(S.data); o.lights = Object.keys(L).filter(k => L[k]).join(' '); } catch {}
   try { const sp = currentSpeed(); o.speedSrc = sp.src; } catch {}
   try { o.alert = $('alertBar')?.classList.contains('hidden') ? '' : ($('alertBar')?.textContent || '').trim().slice(0, 120); } catch {}
-  try { o.rangeEff = recentEffKm(); } catch {}
+  try { const e = recentEffKm(); o.rangeEff = e == null ? null : Math.round(e * 100) / 100; } catch {}
   o.visible = document.visibilityState;
   const j = JSON.stringify(o);
   if (j !== REC.app) { REC.app = j; recLine('app', o); }
@@ -131,7 +132,7 @@ async function recStart() {
   if (REC.on) return;
   const now = Date.now();
   Object.assign(REC, { on: true, id: now, t0: now, seq: 0, buf: [], bytes: 0, lines: 0, last: {}, elm: {}, road: '', app: '',
-    cellsAt: 0, km: 0, fix: null, fixes: 0, maps: 0, demo: S.mode === 'demo', flushing: null, reason: null });
+    cellsAt: 0, km: 0, fix: null, fixes: 0, maps: 0, demo: S.mode === 'demo', flushing: null, reason: null, bad: 0 });
   const settings = { ...SET }; delete settings.addons; delete settings.carImage;
   const chrome = (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || null;
   recLine('head', { format: 'leafdash drive recording v1', app: LeafDash.version, start: new Date(now).toISOString(), tzOffsetMin: new Date().getTimezoneOffset(),
@@ -165,10 +166,11 @@ async function recStop(reason = 'stopped') {
 LeafDash.on('data', () => { if (REC.on) recData(); });
 LeafDash.on('mode', m => { if (REC.on) { recLine('mode', { m }); if (m === 'demo') REC.demo = true; } });
 LeafDash.on('log', m => { if (REC.on && !/^Drive recorder/.test(m)) recLine('log', { m }); });
-LeafDash.on('elm', ({ c, r }) => {
+LeafDash.on('elm', ({ c, r, err }) => {
   if (!REC.on) return;
   const cmd = String(c).toUpperCase().replace(/\s+/g, '');
   if (NO_VIN.test(cmd)) return;
+  if (err) { recLine('elm', { c: cmd, err }); REC.elm[cmd] = null; return; }   // no reply (timed out)
   if (REC.elm[cmd] === r) return;                                          // only when the reply changed
   REC.elm[cmd] = r;
   recLine('elm', { c: cmd, r });
@@ -183,6 +185,13 @@ LeafDash.on('gps', f => {
   if (f.acc == null || f.acc < 50) REC.fix = f;
   recLine('gps', f);
 });
+// replies that came back broken (pieces missing, NO DATA…): kept, up to 3000 a drive, to see what goes wrong
+LeafDash.on('badreply', ({ why, text }) => {
+  if (!REC.on || (REC.bad = (REC.bad || 0) + 1) > 3000) return;
+  if (/6181/.test(String(text).replace(/\s+/g, ''))) return;                // could be the VIN reply: never kept
+  recLine('bad', { why, text });
+});
+LeafDash.on('osmerr', e => { if (REC.on) recLine('osmerr', e); });
 LeafDash.on('osm', json => { if (REC.on) { REC.maps++; recLine('osm', { json }); } });
 window.addEventListener('error', e => recLine('err', { m: String(e.message || e), src: e.filename ? `${e.filename.split('/').pop()}:${e.lineno}` : null }));
 window.addEventListener('unhandledrejection', e => recLine('err', { m: 'promise: ' + String(e.reason?.message || e.reason) }));
