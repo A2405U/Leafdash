@@ -91,7 +91,6 @@ const hb = v => v ? hexBytes(v) : '—';
 const savedFound = () => { try { return JSON.parse(localStorage.getItem(DS_KEY)) || {}; } catch { return {}; } };
 const dsPrefs = () => { try { return { ecus: null, custom: [], ...JSON.parse(localStorage.getItem(DS_PREF)) }; } catch { return { ecus: null, custom: [] }; } };
 const dsSavePrefs = p => { try { localStorage.setItem(DS_PREF, JSON.stringify(p)); } catch {} };
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /** All groups, with any tests you've added yourself as a last group. */
 function dsGroups() {

@@ -72,11 +72,11 @@ function renderAddonsSection(box) {
       <div class="addon-head"><b>${a.name}</b>
         <label class="switch-row" style="padding:0"><input type="checkbox" data-en ${c.enabled ? 'checked' : ''} aria-label="Enable ${a.name}"></label></div>
       <p class="hint">${a.description}</p>
-      <div class="addon-status ${AO[a.id]?.cls || ''}" data-addon-status="${a.id}">${AO[a.id]?.status || (c.enabled ? 'Enabled' : 'Off')}</div>
+      <div class="addon-status ${AO[a.id]?.cls || ''}" data-addon-status="${a.id}">${esc(AO[a.id]?.status || (c.enabled ? 'Enabled' : 'Off'))}</div>
       <details><summary class="hint">Set up</summary>
         <div class="addon-cfg">${a.fields.map(f => f.type === 'bool'
           ? `<label class="switch-row"><span>${f.label}</span><input type="checkbox" data-k="${f.key}" ${c[f.key] ? 'checked' : ''}></label>`
-          : `<label><span>${f.label}</span><input data-k="${f.key}" type="${f.type || 'text'}" value="${c[f.key] ?? ''}" placeholder="${f.placeholder || ''}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join('')}
+          : `<label><span>${f.label}</span><input data-k="${f.key}" type="${f.type || 'text'}" value="${esc(c[f.key])}" placeholder="${f.placeholder || ''}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join('')}
           ${a.help ? `<p class="hint">${a.help}</p>` : ''}
           <p class="hint">Credentials are saved only in this browser on this device.</p>
         </div></details>
@@ -99,10 +99,10 @@ function renderAddonsSection(box) {
       if (problem) { addonStatus(a.id, problem, 'err'); card.querySelector('details').open = true; return; }
       const ok = await confirmSheet({
         title: `Enable ${a.name}?`,
-        body: `<p>While Leaf Dash is open and connected to your car, it will send this to <b>${a.destination(c)}</b> every ${Math.max(a.minInterval || 5, +c.interval || 10)} seconds:</p>
+        body: `<p>While Leaf Dash is open and connected to your car, it will send this to <b>${esc(a.destination(c))}</b> every ${Math.max(a.minInterval || 5, +c.interval || 10)} seconds:</p>
           <ul class="sends">${a.sends(c).map(x => `<li>${x}</li>`).join('')}</ul>
           <p class="hint">Nothing is sent in Demo mode. Add-ons only send data out to this service. They can't send anything to your car. You can turn this off any time in Settings → Add-ons.</p>`,
-        ok: 'Enable', requireTick: `I understand my car's data will be sent to ${a.destination(c)}`,
+        ok: 'Enable', requireTick: `I understand my car's data will be sent to ${esc(a.destination(c))}`,
       });
       if (!ok) return;
       c.enabled = true; en.checked = true; saveSettings();

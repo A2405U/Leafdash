@@ -4,6 +4,8 @@
    ===================================================================== */
 
 const SET_KEY = 'leafdash.settings';
+/** Make text safe to put inside HTML (saved values, logins, messages from other services). */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const CAR_COLOURS = [
   ['Pearl white', '#e6e8eb'], ['Silver', '#b4bac1'], ['Grey', '#5b626b'], ['Black', '#17191c'],
   ['Red', '#b3141f'], ['Blue', '#1f4fa3'], ['Copper', '#a8643a'], ['Teal', '#2c8c8a'],
