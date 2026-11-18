@@ -1,6 +1,6 @@
 # Leaf Dash
 
-Notice: This project and part of the information about this project was created using Claude Opus 5.5 and Claude Fable 5.2 - This project is also still in beta and active development
+Notice: This project and part of the information about this project was created using Claude Opus 5.5 and Claude Fable 3.2 - This project is also still in beta and active development
 
 A clean, customisable dashboard for the Nissan Leaf (built and calibrated on a 2021 ZE1 40 kWh). It runs in Chrome on Android and talks to a Bluetooth LE OBD adapter (LELink²) using Web Bluetooth. You install it from the browser, and it works offline once loaded.
 
