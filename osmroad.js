@@ -90,6 +90,7 @@ function featKind(t) {
   return null;
 }
 function osmLoad(json) {
+  window.LeafDash?.emit('osm', json);   // for the drive recorder
   for (const el of json.elements || []) {
     if (el.type === 'node') {
       const kind = featKind(el.tags || {});
@@ -338,6 +339,7 @@ function pathNearest(path, pt, sGuess, span = 40) {
 
 /* ---------------- GPS input (called from drive.js) ---------------- */
 function osmOnFix(lat, lon, heading, speed, fake = false) {
+  if (fake) window.LeafDash?.emit('gps', { lat, lon, hdg: heading == null ? null : heading, spd: speed, fake: true });   // demo route
   if (OSM.fixture ? !fake : !SET.realRoad) return;          // demo route ignores the phone's GPS
   if (!OSM.O || metres(OSM.O, { lat, lon }) > 20000) { OSM.O = { lat, lon }; OSM.ways.clear(); OSM.nodeWays.clear(); OSM.feats.clear(); OSM.fetchAt = null; }
   osmFetch(lat, lon);

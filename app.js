@@ -75,6 +75,7 @@ const logLines = [];
 function log(msg) {
   const t = new Date().toLocaleTimeString();
   logLines.push(`${t}  ${msg}`);
+  window.LeafDash?.emit('log', msg);
   if (logLines.length > 300) logLines.shift();
   $('log').textContent = logLines.slice().reverse().join('\n');
 }
@@ -164,7 +165,9 @@ class Elm {
         }, timeout);
       });
       await this.write(cmd + '\r');
-      return (await reply).trim();
+      const r = (await reply).trim();
+      window.LeafDash?.emit('elm', { c: cmd, r });   // for the drive recorder
+      return r;
     };
     const p = this.chain.then(run, run);
     this.chain = p.catch(() => {});

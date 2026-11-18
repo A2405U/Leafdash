@@ -424,6 +424,11 @@ label.btn { cursor: pointer; }
 .ds-res .to { color: var(--amber); }
 .ds-diff .ds-res { display: block; }
 
+.pill.rec { background: rgba(255,93,108,.15); color: var(--red); }
+.rec-dot { display: flex; align-items: center; gap: 6px; border: 0; background: rgba(255,93,108,.15); color: var(--red); font: 700 11px/1 system-ui; letter-spacing: .06em; padding: 6px 9px; border-radius: 99px; }
+.rec-dot i { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 1.4s infinite; }
+.rec-dot.hidden { display: none; }
+.rec-row .chg-cost { display: flex; gap: 6px; justify-content: flex-end; }
 .pill.heat { background: rgba(255,138,92,.15); color: #ff8a5c; }
 
 /* real road overlays */

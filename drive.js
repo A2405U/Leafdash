@@ -35,6 +35,8 @@ function startGps() {
       if (dt > 0.5) v = haversine(SPD.last.lat, SPD.last.lon, p.coords.latitude, p.coords.longitude) / dt;
     }
     SPD.last = { t: now, lat: p.coords.latitude, lon: p.coords.longitude };
+    const c = p.coords;
+    window.LeafDash?.emit('gps', { lat: c.latitude, lon: c.longitude, acc: c.accuracy, alt: c.altitude, hdg: c.heading, spd: c.speed, at: now });
     if (v != null && !Number.isNaN(v)) { SPD.mps = Math.max(0, v); SPD.at = Date.now(); }
     osmOnFix(p.coords.latitude, p.coords.longitude, p.coords.heading, v);   // real road shape (if enabled)
   }, e => log('GPS: ' + e.message), { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 });
