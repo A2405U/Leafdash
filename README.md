@@ -121,6 +121,10 @@ Settings, prices, the dashboard layout, the charge log and the battery history l
 - Settings shows when you last backed up, and nudges you after a month.
 - The app also asks the browser not to clear its data when the phone runs short of space.
 
+## Roadside scenery (Settings → Drive screen)
+
+Trees, hedges, houses, lamp posts and fences beside the road, in the same outline look as the road, with green only for leaves and hedges. It's drawn by the app, so nothing extra is downloaded. With real road shape on, the mix follows the road: houses and lamp posts on 30 mph streets, hedgerows and trees on country roads, tall lamp posts on dual carriageways. Junctions, roundabouts, lights and zebras are kept clear, and the same stretch of road always looks the same. Turn it off under **Scenery**.
+
 ## Lights on the Drive screen
 
 The car on the Drive screen mirrors your real lights: dipped and main beam on the road ahead, tail lights, brake lights (with the high-level one), reverse lights and flashing indicators.
@@ -230,6 +234,7 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `osmroad.js` | Real road shape from OpenStreetMap |
 | `charge.js` | Charging screen |
 | `healthtrip.js` | Health trip recording and report |
+| `scenery.js` | Roadside scenery on the Drive screen |
 | `driverec.js` | Drive recorder: everything on a drive, into one file |
 | `history.js` | Recent efficiency and range, charge log and costs, battery health trend |
 | `alerts.js` | Gentle alerts, spoken updates, night dimming, speed limit nudge |
