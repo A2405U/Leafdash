@@ -20,24 +20,24 @@ const CAR_DIDS = [
   { key: 'speed',      ecu: 'vcm', did: '121A', tier: 1, fast: true,  len: 2, dec: v => s16(v, 0) / 10, unit: 'km/h' },
   { key: 'motorKw',    ecu: 'vcm', did: '1146', tier: 1, fast: true,  len: 2, dec: v => s16(v, 0) * 40 / 1000, unit: 'kW' },
   { key: 'brakeRaw',   ecu: 'vcm', did: '1305', tier: 1, fast: true,  len: 1, dec: v => v[0] },             // 0x04 = brake pedal pressed (mode scan, 14 Nov 2026)
-  { key: 'accelRaw',   ecu: 'vcm', did: '1132', tier: 2,  len: 2, dec: v => u16(v, 0) },      // accelerator: 0 released, 314 about halfway, 682 on the floor
-  { key: 'brakeRawPos', ecu: 'vcm', did: '1119', tier: 3, len: 2, dec: v => u16(v, 0) },      // brake pedal: 0 released, 31 light, 1022 firm
-  { key: 'rpm',        ecu: 'vcm', did: '1255', tier: 2,  len: 2, dec: v => s16(v, 0), unit: 'rpm', verify: true },
-  { key: 'ePedalRaw',  ecu: 'vcm', did: '131A', tier: 3,  len: 1, dec: v => v[0] },
-  { key: 'auxKw',      ecu: 'vcm', did: '1152', tier: 5,  len: 1, dec: v => v[0] * 100 / 1000, unit: 'kW' },
+  { key: 'accelRaw',   ecu: 'vcm', did: '1132', tier: 2, drive: 3,  len: 2, dec: v => u16(v, 0) },      // accelerator: 0 released, 314 about halfway, 682 on the floor
+  { key: 'brakeRawPos', ecu: 'vcm', did: '1119', tier: 3, drive: 4, len: 2, dec: v => u16(v, 0) },      // brake pedal: 0 released, 31 light, 1022 firm
+  { key: 'rpm',        ecu: 'vcm', did: '1255', tier: 2, drive: 6,  len: 2, dec: v => s16(v, 0), unit: 'rpm', verify: true },
+  { key: 'ePedalRaw',  ecu: 'vcm', did: '131A', tier: 3, drive: 6,  len: 1, dec: v => v[0] },
+  { key: 'auxKw',      ecu: 'vcm', did: '1152', tier: 5, drive: 15,  len: 1, dec: v => v[0] * 100 / 1000, unit: 'kW' },
   // climate (confirmed on a 2021 ZE1 with a step-by-step mode scan)
-  { key: 'climRaw',    ecu: 'vcm', did: '1323', tier: 3,  len: 1, dec: v => v[0] },            // 0x20 = climate running
-  { key: 'hvacRaw',    ecu: 'vcm', did: '131B', tier: 1,  len: 1, dec: v => v[0] },            // 0x01 = A/C, 0x10 = ECO, 0x20 = rear demister
-  { key: 'acCompRpm',  ecu: 'vcm', did: '1178', tier: 5,  len: 2, dec: v => u16(v, 0), unit: 'rpm' },
-  { key: 'acCoilTemp', ecu: 'vcm', did: '1263', tier: 5,  len: 1, dec: v => v[0] / 2 - 40, unit: '°C' },
-  { key: 'heaterKw',   ecu: 'vcm', did: '1262', tier: 5,  len: 1, dec: v => v[0] * 250 / 1000, unit: 'kW' },
-  { key: 'aux12A',     ecu: 'vcm', did: '1183', tier: 5,  len: 2, dec: v => s16(v, 0) / 256, unit: 'A' },
+  { key: 'climRaw',    ecu: 'vcm', did: '1323', tier: 3, drive: 10,  len: 1, dec: v => v[0] },            // 0x20 = climate running
+  { key: 'hvacRaw',    ecu: 'vcm', did: '131B', tier: 1, drive: 3,  len: 1, dec: v => v[0] },            // 0x01 = A/C, 0x10 = ECO, 0x20 = rear demister
+  { key: 'acCompRpm',  ecu: 'vcm', did: '1178', tier: 5, drive: 30,  len: 2, dec: v => u16(v, 0), unit: 'rpm' },
+  { key: 'acCoilTemp', ecu: 'vcm', did: '1263', tier: 5, drive: 30,  len: 1, dec: v => v[0] / 2 - 40, unit: '°C' },
+  { key: 'heaterKw',   ecu: 'vcm', did: '1262', tier: 5, drive: 10,  len: 1, dec: v => v[0] * 250 / 1000, unit: 'kW' },
+  { key: 'aux12A',     ecu: 'vcm', did: '1183', tier: 5, drive: 15,  len: 2, dec: v => s16(v, 0) / 256, unit: 'A' },
   { key: 'aux12V',     ecu: 'vcm', did: '1103', tier: 10, len: 1, dec: v => v[0] * 0.08, unit: 'V' },
-  { key: 'ready',      ecu: 'vcm', did: '1304', tier: 5,  len: 1, dec: v => (v[0] & 0x80) === 0x80 },
+  { key: 'ready',      ecu: 'vcm', did: '1304', tier: 5, drive: 30,  len: 1, dec: v => (v[0] & 0x80) === 0x80 },
   { key: 'ambient',    ecu: 'vcm', did: '115D', tier: 10, len: 1, dec: v => v[0] / 2 - 40, unit: '°C' },
-  { key: 'chargeMode', ecu: 'vcm', did: '114E', tier: 5,  len: 1, dec: v => v[0] },
-  { key: 'plug',       ecu: 'vcm', did: '1234', tier: 10, len: 1, dec: v => v[0] },
-  { key: 'obcKw',      ecu: 'vcm', did: '1236', tier: 5,  len: 2, dec: v => s16(v, 0) * 100 / 1000, unit: 'kW' },
+  { key: 'chargeMode', ecu: 'vcm', did: '114E', tier: 5, drive: 60,  len: 1, dec: v => v[0] },
+  { key: 'plug',       ecu: 'vcm', did: '1234', tier: 10, drive: 60, len: 1, dec: v => v[0] },
+  { key: 'obcKw',      ecu: 'vcm', did: '1236', tier: 5, drive: 60,  len: 2, dec: v => s16(v, 0) * 100 / 1000, unit: 'kW' },
   { key: 'qc',         ecu: 'vcm', did: '1203', tier: 60, len: 2, dec: v => u16(v, 0) },
   { key: 'l1l2',       ecu: 'vcm', did: '1205', tier: 60, len: 2, dec: v => u16(v, 0) },
   // Meter / cluster (0x743 → 0x763)
@@ -67,6 +67,12 @@ async function ecuRead(ecu, did, timeout = 1500, fc = false) {
   return b.slice(3);
 }
 
+/* "drive" (where given) is how often, in seconds, to read a value while the car is moving. On a real
+   Bluetooth link each request takes 70–100 ms, so there's only time for a couple of extra reads per cycle:
+   things that matter little on the move (the A/C compressor, the charger, the plug) wait longer, which
+   leaves room for cells, temperatures, the odometer, dash range and tyres. */
+const carMoving = () => (S.data.speed ?? 0) > 5;
+
 /** Read one identifier and store its decoded value. */
 async function readCarDid(d) {
   const v = await ecuRead(d.ecu, d.did);
@@ -84,8 +90,8 @@ async function readCarDid(d) {
 function deriveCarData() {
   const d = S.data;
   if (d.gearRaw != null) {
-    d.gear = GEARS[d.gearRaw] || `?${d.gearRaw}`;
-    if (!GEARS[d.gearRaw] && !S.gearWarned?.[d.gearRaw]) { (S.gearWarned ||= {})[d.gearRaw] = 1; log(`Unknown gear value ${d.gearRaw}: tell Claude which gear this was`); }
+    d.gear = d.gearRaw === 0 ? null : GEARS[d.gearRaw] || `?${d.gearRaw}`;   // 0: seen as the car switches off
+    if (d.gearRaw !== 0 && !GEARS[d.gearRaw] && !S.gearWarned?.[d.gearRaw]) { (S.gearWarned ||= {})[d.gearRaw] = 1; log(`Unknown gear value ${d.gearRaw}: tell Claude which gear this was`); }
   }
   if (d.ePedalRaw != null) d.ePedal = d.ePedalRaw === 0x04;
   if (d.brakeRaw != null) d.brakeOn = (d.brakeRaw & 0x04) !== 0;
@@ -119,7 +125,7 @@ const LIGHT_RAW = {}, IND = { at: 0 };
 const SHOW_INDICATORS = false;
 /** How often to read the lights (seconds). The gap varies a little, so the readings can't fall into
  *  step with a flashing indicator and keep landing on its dark half. */
-const lightsEvery = () => !SHOW_INDICATORS ? 1.5 : Date.now() - IND.at < 8000 ? 0.9 : 1.4 + Math.random() * 0.4;
+const lightsEvery = () => !SHOW_INDICATORS ? (carMoving() ? 3 : 1.5) : Date.now() - IND.at < 8000 ? 0.9 : 1.4 + Math.random() * 0.4;
 
 async function pollLights() {
   // not flashing yet: start at a slightly random moment, so readings don't keep step with the poll cycle

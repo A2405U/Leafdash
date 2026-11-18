@@ -165,7 +165,8 @@ class Elm {
         }, timeout);
       });
       await this.write(cmd + '\r');
-      const r = (await reply).trim();
+      let r;
+      try { r = (await reply).trim(); } catch (e) { window.LeafDash?.emit('elm', { c: cmd, err: e.message }); throw e; }
       window.LeafDash?.emit('elm', { c: cmd, r });   // for the drive recorder
       return r;
     };
@@ -234,8 +235,9 @@ function isReadOnly(raw) {
 /* Reassemble an ELM multi-frame (CAF on, headers off) reply into bytes. */
 function parseReply(text) {
   const lines = text.split(/[\r\n]+/).map(s => s.replace(/\s+/g, '')).filter(Boolean);
+  const fail = why => { window.LeafDash?.emit('badreply', { why, text: String(text).slice(0, 400) }); return new Error(why); };   // the drive recorder keeps these
   const bad = lines.find(l => /NODATA|ERROR|STOPPED|UNABLE|BUFFERFULL|\?/i.test(l));
-  if (bad) throw new Error(bad);
+  if (bad) throw fail(bad);
   let len = null, frames = [], single = null;
   for (const l of lines) {
     if (/SEARCHING/i.test(l)) continue;
@@ -248,14 +250,14 @@ function parseReply(text) {
     // Multi-frame: pieces must arrive complete and in order (0,1,2…F,0,1…).
     // A lost piece would shift every byte after it, so reject the whole reply.
     for (let i = 0; i < frames.length; i++) {
-      if (frames[i].n !== i % 16) throw new Error('Incomplete reply (piece missing)');
-      if (frames[i].hex.length % 2) throw new Error('Incomplete reply (piece cut short)');
+      if (frames[i].n !== i % 16) throw fail('Incomplete reply (piece missing)');
+      if (frames[i].hex.length % 2) throw fail('Incomplete reply (piece cut short)');
     }
   }
   const hex = frames.length ? frames.map(f => f.hex).join('') : (single || '');
   const bytes = [];
   for (let i = 0; i + 1 < hex.length; i += 2) bytes.push(parseInt(hex.substr(i, 2), 16));
-  if (len && bytes.length < len) throw new Error(`Incomplete reply (${bytes.length}/${len} bytes)`);
+  if (len && bytes.length < len) throw fail(`Incomplete reply (${bytes.length}/${len} bytes)`);
   return len ? bytes.slice(0, len) : bytes;
 }
 
@@ -361,7 +363,7 @@ function slowItems() {
     { id: 'vin', ecu: 'vcm', every: 1e9, run: readVin },
   ];
   if (Object.values(LIGHT_BITS).some(Boolean)) items.push({ id: 'lights', ecu: null, prio: true, every: lightsEvery(), run: pollLights });   // lights rarely change, which keeps speed/power quick; read faster while an indicator flashes
-  for (const d of CAR_DIDS) if (!d.fast) items.push({ id: d.key, ecu: d.ecu, every: d.tier, run: () => readCarDid(d), skip: () => CD.skip[d.key] && (Date.now() - (POLL.last[d.key] || 0) < 120e3) });
+  for (const d of CAR_DIDS) if (!d.fast) items.push({ id: d.key, ecu: d.ecu, every: (carMoving() && d.drive) || d.tier, run: () => readCarDid(d), skip: () => CD.skip[d.key] && (Date.now() - (POLL.last[d.key] || 0) < 120e3) });
   return items;
 }
 
@@ -385,11 +387,18 @@ async function pollLoop() {
 
       // ---- slow lane: what's due, same ECU first, within ~200 ms ----
       const now = Date.now();
-      const due = slowItems().filter(it => now - (POLL.last[it.id] || 0) >= it.every * 1000 && !(it.skip && it.skip()))
-        .sort((x, y) => (y.prio ? 1 : 0) - (x.prio ? 1 : 0) || ((x.ecu === S.ecu || !x.ecu) ? 0 : 1) - ((y.ecu === S.ecu || !y.ecu) ? 0 : 1) || (POLL.last[x.id] || 0) - (POLL.last[y.id] || 0));
-      const budget = performance.now() + 200;
-      for (const it of due) {
-        if (performance.now() > budget) break;
+      const due = slowItems().filter(it => now - (POLL.last[it.id] || 0) >= it.every * 1000 && !(it.skip && it.skip()));
+      // Fair order: whatever is most overdue (for how often it should be read) goes next, so nothing waits for
+      // ever on a slow link. Staying on the computer we're already talking to saves two set-up commands, so it
+      // gets a small head start, but no more. (Before 5.4b the current computer always went first: on a real
+      // 1 s cycle the main computer's own reads filled every slot, and cells, temperatures, odometer, dash range
+      // and tyres were never read.)
+      const late = it => (now - (POLL.last[it.id] || 0)) / (it.every * 1000) * (it.prio ? 3 : 1) * ((!it.ecu || it.ecu === S.ecu) ? 1.3 : 1);
+      const budget = performance.now() + (carMoving() ? 250 : 500);    // parked: more time for the slow values
+      while (due.length && performance.now() <= budget) {
+        let bi = 0;
+        for (let i = 1; i < due.length; i++) if (late(due[i]) > late(due[bi])) bi = i;
+        const it = due.splice(bi, 1)[0];
         POLL.last[it.id] = Date.now();
         try { await it.run(); } catch (e) { if (!/Incomplete/.test(e.message)) log(`${it.id}: ${e.message}`); }
       }
