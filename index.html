@@ -16,6 +16,7 @@
   <header class="top">
     <div class="brand">Leaf<span>Dash</span></div>
     <div class="top-right">
+      <button id="recDot" class="rec-dot hidden" aria-label="Drive recorder is recording"><i></i>REC</button>
       <button id="status" class="status off" aria-label="Connection status"><i></i><span>Disconnected</span></button>
       <button id="btnSettings" class="icon-btn" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
     </div>
@@ -169,6 +170,17 @@
     <section id="view-debug" class="view">
       <div class="card">
         <div class="row-between">
+          <div class="label">Drive recorder · read-only</div>
+          <div id="recStatus" class="pill">Off</div>
+        </div>
+        <p class="hint">Records everything the app sees on a drive into one file you can share: car values, adapter replies, GPS, the map data and what the road drawing matched. Start it before you set off, keep Leaf Dash on screen, and stop it when you park. The VIN is never recorded, but the file does contain your route. The last three recordings are kept here.</p>
+        <p class="hint hidden" id="recRoadOff">Real road shape is off, so no map data will be recorded. <button id="recRoadOn" class="btn ghost small">Turn it on</button></p>
+        <button id="recBtn" class="btn primary small">Start recording</button>
+        <div class="label hidden" id="recPastLabel" style="margin-top:14px">Recordings</div>
+        <div id="recPast" class="chg-list"></div>
+      </div>
+      <div class="card">
+        <div class="row-between">
           <div class="label">Health trip recording · read-only</div>
           <div id="htStatus" class="pill">Off</div>
         </div>
@@ -246,6 +258,7 @@
   <script src="osmroad.js"></script>
   <script src="charge.js"></script>
   <script src="healthtrip.js"></script>
+  <script src="driverec.js"></script>
   <script src="history.js"></script>
   <script src="alerts.js"></script>
   <script src="backup.js"></script>

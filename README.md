@@ -54,6 +54,12 @@ Speed, gear and motor power are read every cycle (about 2–3 times a second). S
 
 Cell readings that arrive with a missing or cut-short Bluetooth piece are now rejected instead of being shown shifted. That was what caused the wrong-looking spread and missing cells. The last good set stays on screen until a clean one arrives.
 
+## Drive recorder (Developer mode → Debug)
+
+Tap **Start recording** before you set off and **Stop recording** when you park. Everything the app sees goes into one file: car values as they change, each set of cell voltages, every adapter request and reply, every GPS fix, the OpenStreetMap data downloaded for the road drawing, what the road drawing matched (road, speed limit, lanes, next junction), and the power label, lights, alerts and log. A red **REC** in the header shows it's running; tap it to jump to the Debug tab. Turn on real road shape first if you want the map data in the file.
+
+Keep Leaf Dash on screen while recording (the screen is kept awake). It's saved every 5 s, so closing the app loses at most a few seconds. The last three recordings are kept, and **Share** packs one into a `leafdash-drive-*.jsonl.gz` file (JSON Lines, gzipped). The VIN is never recorded, but the file does contain your route, so only share it with people you trust. Recordings aren't part of a backup file.
+
 ## Health trip recording (Developer mode → Debug)
 
 Tick **Record my next trip**, then drive. Recording starts when you pull away and stops after 3 minutes parked in P, when you disconnect, or when you tap *Stop now* (3 hour cap). During the trip cells are read every 2 s. At the end you get a report with distance, efficiency, SoC used, SOH/Hx, an estimated pack resistance, voltage sag at peak power, cell spread at rest and under load, which cell drops lowest, battery temperature, charts, and an estimated resistance for each of the 96 cell pairs, with weak ones highlighted. **Share report** saves a standalone HTML page. **Share raw log** saves a CSV with every sample and cell snapshot. Resistance figures are estimates: a trip with a few firm accelerations gives the best numbers. Try the report with `?healthdemo`.
@@ -218,6 +224,7 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `osmroad.js` | Real road shape from OpenStreetMap |
 | `charge.js` | Charging screen |
 | `healthtrip.js` | Health trip recording and report |
+| `driverec.js` | Drive recorder: everything on a drive, into one file |
 | `history.js` | Recent efficiency and range, charge log and costs, battery health trend |
 | `alerts.js` | Gentle alerts, spoken updates, night dimming, speed limit nudge |
 | `backup.js` | Backup file, restore, and asking the browser to keep the data |
