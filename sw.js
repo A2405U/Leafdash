@@ -1,6 +1,6 @@
 // Offline cache: once loaded at home, the app works in the car with no signal.
 // Bump VERSION whenever you change any file so phones pick up the update.
-const VERSION = 'leafdash-v65';
+const VERSION = 'leafdash-v66';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'cardata.js', 'settings.js', 'app.js', 'metrics.js', 'didscan.js',

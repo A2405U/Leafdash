@@ -12,7 +12,7 @@ A clean, customisable dashboard for the Nissan Leaf (built and calibrated on a 2
 
 - **Use at your own risk.** Leaf Dash is a hobby project, provided without any warranty (see the licence).
 - **It only reads from the car** (see below), but you plug the adapter in and use the app at your own risk.
-- **Don't operate it while driving.** Set it up while parked, and keep your eyes on the road.
+- **Don't operate it while driving.** Set it up while parked, put the phone in a fixed holder where it doesn't block your view, and keep your eyes on the road. In the UK it's illegal to hold or use a phone while driving, including when stopped at lights or in traffic. Leaf Dash shows a reminder the first time it connects to the car, and locks Settings and the Debug tab while the car is moving.
 - **Calibrated on one car:** a 2021 Nissan Leaf ZE1 with the 40 kWh battery, UK model. Other years, trims and the 62 kWh e+ may read some values wrongly. [`DATASHEET.md`](DATASHEET.md) says how sure each value is.
 - **Not affiliated with Nissan.** Nissan and Leaf are trademarks of Nissan. LeafSpy is a separate app by its own developer.
 
@@ -208,6 +208,8 @@ Events you can listen for:
 Found a way past the read-only guard, or data going somewhere it shouldn't? Please report it privately, not as a public issue. [`SECURITY.md`](SECURITY.md) says how.
 
 ## Licence
+
+Copyright (C) 2026 A2405U and contributors.
 
 Leaf Dash is free software under the **GNU General Public License v3.0** ([`LICENSE`](LICENSE)). You can use, study, change and share it, and any changed version you share must stay under the same licence with its source code available. That includes the car pictures (`car-rear.webp`, `car-side.webp`).
 
