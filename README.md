@@ -193,6 +193,10 @@ Events you can listen for:
 
 [`DATASHEET.md`](DATASHEET.md) lists the car (2021 Leaf ZE1 Acenta, 40 kWh, UK) and every value the app reads: which computer, which identifier, how it's decoded, and whether it's been confirmed on the car.
 
+## Security
+
+Found a way past the read-only guard, or data going somewhere it shouldn't? Please report it privately, not as a public issue. [`SECURITY.md`](SECURITY.md) says how.
+
 ## Licence
 
 Leaf Dash is free software under the **GNU General Public License v3.0** ([`LICENSE`](LICENSE)). You can use, study, change and share it, and any changed version you share must stay under the same licence with its source code available. That includes the car pictures (`car-rear.webp`, `car-side.webp`).
@@ -220,3 +224,4 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `addons.js` | Add-on framework, Home Assistant, MQTT and ABRP |
 | `didscan.js` | Mode scanner (Developer mode, read-only) |
 | `vendor/mqtt.min.js` | MQTT.js (MIT licence), loaded only when the MQTT add-on is on |
+| `SECURITY.md` | How to report a security problem privately |

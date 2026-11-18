@@ -10,7 +10,7 @@
    ===================================================================== */
 
 const LeafDash = window.LeafDash = {
-  version: '4.8',            // shown in Settings → About. Bump it with EVERY pull request, so the phone shows which one it's on
+  version: '4.9',            // shown in Settings → About. Bump it with EVERY pull request, so the phone shows which one it's on
   metrics: {},           // id → metric definition
   widgets: {},           // id → widget definition
   addons: {},            // id → add-on definition
