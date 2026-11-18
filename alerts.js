@@ -79,7 +79,7 @@ function alertsTick() {
   bar.classList.toggle('notice', AL.shown === 'notice');
   if (top) {
     bar.querySelector('span').textContent = top.text;
-    bar.querySelector('em').textContent = AL.shown === 'notice' ? 'View' : active.length > 1 ? `+${active.length - 1} more` : '';
+    bar.querySelector('em').textContent = AL.shown === 'notice' ? (AL.notice.action ? 'View' : '') : active.length > 1 ? `+${active.length - 1} more` : '';
   }
   if (was !== AL.shown && typeof fitScene === 'function') fitScene();
 }
@@ -168,3 +168,66 @@ $('alertBar')?.querySelector('button')?.addEventListener('click', e => {
   alertsTick();
 });
 $('alertBar')?.addEventListener('click', () => { if (AL.shown === 'notice') AL.notice?.action?.(); });
+
+/* ---------------- safe use while driving ----------------
+   The first time the app connects to the car after opening, a short note says to set it up while
+   parked and not to hold or use the phone while driving. If the car is already moving, the note waits
+   until it stops. While the car is moving, Settings and the Debug tab are locked: Settings closes,
+   Debug switches back to Drive, and tapping either just says why. Only when connected to the car,
+   using its own speed: Demo mode is never locked. */
+const SAFE = { warned: false, pending: false, locked: false, fastSince: 0, slowSince: 0, noticeAt: 0 };
+const SAFE_LOCK_KMH = 8, SAFE_UNLOCK_KMH = 3;        // about 5 mph to lock, under 2 mph to unlock
+const safeKmh = () => { try { const v = currentSpeed().mps; return v == null ? null : v * 3.6; } catch { return null; } };
+
+function safeWarn() {
+  SAFE.warned = true; SAFE.pending = false;
+  openSheet(`<h3>Before you drive</h3>
+    <div class="modal-body">
+      <p>Set Leaf Dash up while you're parked, and put your phone in a fixed holder where it doesn't block your view.</p>
+      <p><b>Don't hold or use your phone while driving.</b> In the UK that's illegal, including when you're stopped at lights or in traffic.</p>
+      <p class="hint">While the car is moving, Settings and the Debug tab are locked.</p>
+    </div>
+    <div class="modal-actions"><button class="btn primary" data-x>I understand</button></div>`);
+}
+
+function safeLock(on) {
+  if (SAFE.locked === on) return;
+  SAFE.locked = on;
+  document.body.classList.toggle('drive-locked', on);
+  if (!on) return;
+  document.querySelectorAll('.modal-wrap').forEach(w => {                // close Settings if it's open
+    if (w.querySelector('[data-sec]')) w.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
+  if (S.view === 'debug') showView('drive');
+}
+
+function safeTick() {
+  const now = Date.now(), live = S.mode === 'on' && now - S.lastUpdate < 8000;
+  const kmh = live ? safeKmh() : null;
+  if (kmh != null && kmh > SAFE_LOCK_KMH) { SAFE.slowSince = 0; SAFE.fastSince ||= now; if (now - SAFE.fastSince > 2000) safeLock(true); }
+  else { SAFE.fastSince = 0; if (kmh == null || kmh < SAFE_UNLOCK_KMH) { SAFE.slowSince ||= now; if (now - SAFE.slowSince > 3000 || !live) safeLock(false); } }
+  if (SAFE.pending && !SAFE.locked && kmh != null && kmh < SAFE_UNLOCK_KMH) safeWarn();
+}
+setInterval(safeTick, 500);
+
+LeafDash.on('mode', m => {
+  if (m !== 'on' || SAFE.warned || SAFE.pending) return;
+  setTimeout(() => {                                    // give the first readings a moment to arrive
+    if (S.mode !== 'on' || SAFE.warned) return;
+    const kmh = safeKmh();
+    if (kmh != null && kmh > SAFE_UNLOCK_KMH) SAFE.pending = true; else safeWarn();
+  }, 1500);
+});
+
+/** A short note in the alert line saying why a tap did nothing. */
+function safeBlocked(what) {
+  const n = { text: `${what} locked while the car is moving` };
+  alertNotice(n);
+  setTimeout(() => { if (AL.notice === n) alertNotice(null); }, 4000);
+}
+// Taps on the Debug tab (or the REC marker, which opens it) while moving. Settings blocks itself in openSettings().
+document.addEventListener('click', e => {
+  if (!SAFE.locked || !e.target.closest('.tabs button[data-view="debug"], #recDot')) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  safeBlocked('Debug is');
+}, true);

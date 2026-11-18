@@ -596,3 +596,5 @@ body.night::after { opacity: .45; }
 .ds-rm { margin-left: auto; border: 0; background: none; color: var(--muted); font-size: 13px; padding: 2px 8px; }
 .ds-group .hint { margin: 8px 0 4px; }
 .ds-add input { font: 14px system-ui; }
+/* locked while the car is moving (alerts.js) */
+.drive-locked #btnSettings, .drive-locked #btnDriveSettings, .drive-locked #btnPrices, .drive-locked .tabs button[data-view="debug"], .drive-locked #recDot { opacity: .35; }
