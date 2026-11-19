@@ -96,6 +96,8 @@ When it's turned on, the Drive screen draws the road you're actually on: its cur
 
 Traffic lights and zebra crossings come from the same map download. They're drawn at the kerb (lights unlit, since the map only says where they are, not their colour; zebras with flashing Belisha beacons) with a "Lights · 120 yd" note under the speed sign.
 
+**Remembered map areas:** every map download is kept on the phone for 30 days (the newest 250 areas, each 100–300 kB). Driving the same roads again, like a commute, loads them from the phone instead of the map servers, so the road shape still shows when the servers are busy or there's no signal. If both servers fail, the app tries again after 10 s, then 20 s, 40 s and at most a minute. The saved areas show which roads you've driven, stay on this phone only, and aren't part of a backup; **Forget saved map areas** in Settings → Drive screen clears them.
+
 ## Alerts and driving aids (Settings → Alerts and driving aids)
 
 - **Gentle alerts:** one quiet line under the power bar, never a pop-up. It shows for a tyre that's low or well below the others, a hot battery (45°C and up), one cell drifting from the rest at rest, or a low 12 V battery. Each has to stay true for a while first, and a dismissed alert stays away until the problem clears.

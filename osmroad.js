@@ -61,10 +61,64 @@ function parseLimit(v) {
 }
 
 /* ---------------- fetching ---------------- */
+/* ---------------- remembered map areas ----------------
+   Every map download is kept on this phone (IndexedDB store 'osmcache') for 30 days, named by where and
+   when it was downloaded. Driving the same roads again (a commute) loads them from here instead of asking
+   the map servers, so it also works when the servers are busy or there's no signal. The newest 250 areas
+   are kept (each is 100–300 kB). They're not part of a backup, and Settings → Drive screen can forget them. */
+const OSMC = { keys: null, loaded: new Set(), MAX: 250, DAYS: 30 };
+const osmcKey = (lat, lon, at) => `${lat.toFixed(5)},${lon.toFixed(5)},${at}`;
+const osmcParse = k => { const [lat, lon, at] = String(k).split(',').map(Number); return { k, lat, lon, at }; };
+async function osmcStore(mode = 'readonly') { return (await htDb()).transaction('osmcache', mode).objectStore('osmcache'); }
+const osmcReq = q => new Promise((res, rej) => { q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+/** The list of remembered areas (loaded once), with old ones forgotten. */
+async function osmcIndex() {
+  if (OSMC.keys) return OSMC.keys;
+  const keys = (await osmcReq((await osmcStore()).getAllKeys())).map(osmcParse);
+  const old = Date.now() - OSMC.DAYS * 864e5;
+  const stale = keys.filter(e => !(e.at > old));
+  if (stale.length) { const st = await osmcStore('readwrite'); stale.forEach(e => st.delete(e.k)); }
+  return OSMC.keys = keys.filter(e => e.at > old);
+}
+/** Load every remembered area within 800 m that isn't loaded yet. Returns the nearest one's centre if it's
+ *  within 350 m (its 700 m radius still reaches well ahead), else null, meaning a download is needed. */
+async function osmcLoadNear(lat, lon) {
+  const here = { lat, lon };
+  const near = (await osmcIndex()).map(e => ({ e, d: metres(e, here) })).filter(x => x.d < 800).sort((a, b) => a.d - b.d);
+  for (const { e } of near) {
+    if (OSMC.loaded.has(e.k)) continue;
+    const json = await osmcReq((await osmcStore()).get(e.k));
+    OSMC.loaded.add(e.k);
+    if (json) osmLoad(json, true);
+  }
+  return near.length && near[0].d < 350 ? { lat: near[0].e.lat, lon: near[0].e.lon } : null;
+}
+async function osmcPut(lat, lon, json) {
+  try {
+    const idx = await osmcIndex(), e = osmcParse(osmcKey(lat, lon, Date.now()));
+    const st = await osmcStore('readwrite');
+    st.put(json, e.k);
+    idx.push(e); OSMC.loaded.add(e.k);
+    idx.sort((a, b) => a.at - b.at);
+    while (idx.length > OSMC.MAX) st.delete(idx.shift().k);       // forget the oldest
+  } catch {}
+}
+async function osmcClear() {
+  try { (await osmcStore('readwrite')).clear(); } catch {}
+  OSMC.keys = []; OSMC.loaded.clear();
+}
+async function osmcCount() { try { return (await osmcIndex()).length; } catch { return 0; } }
+
 async function osmFetch(lat, lon) {
-  if (OSM.fixture || OSM.busy || Date.now() < OSM.nextTry) return;
+  if (OSM.fixture || OSM.busy) return;
   if (OSM.fetchAt && metres(OSM.fetchAt, { lat, lon }) < 300 && OSM.ways.size) return;
   OSM.busy = true;
+  // roads driven before: from the phone, no download (also while waiting to retry after a server error)
+  try {
+    const hit = await osmcLoadNear(lat, lon);
+    if (hit) { OSM.fetchAt = hit; OSM.status = ''; OSM.busy = false; return; }
+  } catch {}
+  if (Date.now() < OSM.nextTry) { OSM.busy = false; return; }
   const at = `around:700,${lat.toFixed(5)},${lon.toFixed(5)}`;
   const q = `[out:json][timeout:15];(way(${at})[highway~"${OSM_HW}"];node(${at})[highway~"^(traffic_signals|crossing|mini_roundabout)$"];);out body geom qt;`;
   for (const url of OSM_SERVERS) {
@@ -72,13 +126,17 @@ async function osmFetch(lat, lon) {
       // form-encoded POST is a "simple" request, so no CORS preflight is needed
       const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      osmLoad(await r.json());
-      OSM.fetchAt = { lat, lon }; OSM.nextTry = Date.now() + 10e3; OSM.status = '';
+      const json = await r.json();
+      osmLoad(json);
+      osmcPut(lat, lon, json);                                  // remember it for next time
+      OSM.fetchAt = { lat, lon }; OSM.nextTry = Date.now() + 10e3; OSM.status = ''; OSM.fails = 0;
       OSM.busy = false;
       return;
     } catch (e) { OSM.status = 'map data unavailable'; window.LeafDash?.emit('osmerr', { server: new URL(url).host, why: String(e.message || e) }); }
   }
-  OSM.nextTry = Date.now() + 60e3;            // back off, keep using what we have
+  // both servers failed (usually busy: HTTP 502/504): try again after 10 s, then 20, 40, at most 60 s
+  OSM.fails = (OSM.fails || 0) + 1;
+  OSM.nextTry = Date.now() + Math.min(60, 10 * 2 ** (OSM.fails - 1)) * 1000;
   OSM.busy = false;
 }
 
@@ -89,8 +147,8 @@ function featKind(t) {
   if (t.highway === 'mini_roundabout') return 'mini';
   return null;
 }
-function osmLoad(json) {
-  window.LeafDash?.emit('osm', json);   // for the drive recorder
+function osmLoad(json, cached = false) {
+  window.LeafDash?.emit('osm', cached ? { ...json, cached: true } : json);   // for the drive recorder
   for (const el of json.elements || []) {
     if (el.type === 'node') {
       const kind = featKind(el.tags || {});
@@ -106,6 +164,7 @@ function osmLoad(json) {
   if (OSM.ways.size > 4000 && OSM.match) {
     const here = OSM.match.p;
     for (const [id, w] of OSM.ways) if (Math.hypot(w.pts[0].x - here.x, w.pts[0].y - here.y) > 4000) OSM.ways.delete(id);
+    OSMC.loaded.clear();                                       // remembered areas can load again when we come back
   }
 }
 
@@ -341,7 +400,7 @@ function pathNearest(path, pt, sGuess, span = 40) {
 function osmOnFix(lat, lon, heading, speed, fake = false) {
   if (fake) window.LeafDash?.emit('gps', { lat, lon, hdg: heading == null ? null : heading, spd: speed, fake: true });   // demo route
   if (OSM.fixture ? !fake : !SET.realRoad) return;          // demo route ignores the phone's GPS
-  if (!OSM.O || metres(OSM.O, { lat, lon }) > 20000) { OSM.O = { lat, lon }; OSM.ways.clear(); OSM.nodeWays.clear(); OSM.feats.clear(); OSM.fetchAt = null; }
+  if (!OSM.O || metres(OSM.O, { lat, lon }) > 20000) { OSM.O = { lat, lon }; OSM.ways.clear(); OSM.nodeWays.clear(); OSM.feats.clear(); OSM.fetchAt = null; OSMC.loaded.clear(); }
   osmFetch(lat, lon);
   const p = toXY(lat, lon);
   const h = heading != null && !Number.isNaN(heading) ? heading * Math.PI / 180 : null;

@@ -28,8 +28,8 @@ function htTripsSave(list) {
   try { localStorage.setItem(HT_KEY, JSON.stringify(list.slice(-10))); } catch {}
 }
 const htDb = () => new Promise((res, rej) => {
-  const r = indexedDB.open('leafdash', 2);   // 2 added the drive recorder's store
-  r.onupgradeneeded = () => { for (const st of ['healthraw', 'driverec']) if (!r.result.objectStoreNames.contains(st)) r.result.createObjectStore(st); };
+  const r = indexedDB.open('leafdash', 3);   // 2 added the drive recorder's store, 3 the remembered map areas
+  r.onupgradeneeded = () => { for (const st of ['healthraw', 'driverec', 'osmcache']) if (!r.result.objectStoreNames.contains(st)) r.result.createObjectStore(st); };
   r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
 });
 async function htRawPut(id, text) {
