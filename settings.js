@@ -95,7 +95,8 @@ function openSettings(section) {
       </div>
       <div class="set-group"><div class="label">Real road shape</div>
         <label class="switch-row"><span>Draw the road you're on (curves, lanes, speed limit) from OpenStreetMap</span><input type="checkbox" data-real ${SET.realRoad ? 'checked' : ''}></label>
-        <p class="hint">Uses GPS and a little mobile data. Falls back to the straight road when there's no GPS or map data.</p>
+        <p class="hint">Uses GPS and a little mobile data. Falls back to the straight road when there's no GPS or map data. Map areas you've driven are kept on this phone for 30 days, so the same roads load without downloading again.</p>
+        <p class="hint"><button class="btn ghost small" data-osmc-clear>Forget saved map areas</button> <span data-osmc-n></span></p>
       </div>
       <div class="set-group"><div class="label">Scenery</div>
         <label class="switch-row"><span>Trees, hedges, houses and lamp posts beside the road</span><input type="checkbox" data-sw="scenery" ${SET.scenery !== false ? 'checked' : ''}></label>
@@ -230,6 +231,10 @@ function openSettings(section) {
     if (ok) { SET.realRoad = true; e.target.checked = true; saveSettings(); }
   };
   box.querySelectorAll('[data-sw]').forEach(c => c.onchange = () => { SET[c.dataset.sw] = c.checked; saveSettings(); });
+  // remembered map areas (osmroad.js): how many, and a button to forget them
+  const osmcShow = () => osmcCount().then(n => { const el = box.querySelector('[data-osmc-n]'); if (el) el.textContent = n ? `${n} saved` : 'none saved'; });
+  if (typeof osmcCount === 'function') osmcShow();
+  box.querySelector('[data-osmc-clear]')?.addEventListener('click', async () => { await osmcClear(); osmcShow(); });
   box.querySelector('[data-night]').onchange = e => { SET.nightDim = e.target.checked ? 'auto' : 'off'; saveSettings(); };
   box.querySelector('[data-a=testVoice]').onclick = () => {
     if (!window.speechSynthesis) return alert('This browser has no built-in voice.');
