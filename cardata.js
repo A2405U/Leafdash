@@ -41,14 +41,17 @@ const CAR_DIDS = [
   { key: 'qc',         ecu: 'vcm', did: '1203', tier: 60, len: 2, dec: v => u16(v, 0) },
   { key: 'l1l2',       ecu: 'vcm', did: '1205', tier: 60, len: 2, dec: v => u16(v, 0) },
   // Meter / cluster (0x743 → 0x763)
-  { key: 'odoKm',      ecu: 'meter', did: '0E01', tier: 60, len: 3, dec: v => (v[0] << 16) | (v[1] << 8) | v[2], unit: 'km' },
-  { key: 'gomKm',      ecu: 'meter', did: '0E24', tier: 10, len: 2, dec: v => s16(v, 0) / 10, unit: 'km', verify: true },
-  { key: 'tyreFR',     ecu: 'meter', did: '0E25', tier: 30, len: 1, dec: v => v[0] * 1.7236894, unit: 'kPa' },
-  { key: 'tyreFL',     ecu: 'meter', did: '0E26', tier: 30, len: 1, dec: v => v[0] * 1.7236894, unit: 'kPa' },
-  { key: 'tyreRR',     ecu: 'meter', did: '0E27', tier: 30, len: 1, dec: v => v[0] * 1.7236894, unit: 'kPa' },
-  { key: 'tyreRL',     ecu: 'meter', did: '0E28', tier: 30, len: 1, dec: v => v[0] * 1.7236894, unit: 'kPa' },
+  // odometer: the UK car reports it in miles (a real drive: +20 while GPS measured 32.0 km, 19 Nov 2026); stored in km
+  { key: 'odoKm',      ecu: 'meter', did: '0E01', tier: 60, len: 3, dec: v => ((v[0] << 16) | (v[1] << 8) | v[2]) * (ODO_MILES ? 1.609344 : 1), unit: 'km' },
+  // dash range: a 13-byte reply in two pieces, so it needs flow control (fc). Raw 168 at 74% charge: km, not tenths
+  { key: 'gomKm',      ecu: 'meter', did: '0E24', tier: 10, fc: true, len: 2, dec: v => s16(v, 0), unit: 'km', verify: true },
+  { key: 'tyreFR',     ecu: 'meter', did: '0E25', tier: 30, len: 1, dec: v => v[0] ? v[0] * 1.7236894 : null, unit: 'kPa' },   // 0 = sensor not awake yet
+  { key: 'tyreFL',     ecu: 'meter', did: '0E26', tier: 30, len: 1, dec: v => v[0] ? v[0] * 1.7236894 : null, unit: 'kPa' },   // 0 = sensor not awake yet
+  { key: 'tyreRR',     ecu: 'meter', did: '0E27', tier: 30, len: 1, dec: v => v[0] ? v[0] * 1.7236894 : null, unit: 'kPa' },   // 0 = sensor not awake yet
+  { key: 'tyreRL',     ecu: 'meter', did: '0E28', tier: 30, len: 1, dec: v => v[0] ? v[0] * 1.7236894 : null, unit: 'kPa' },   // 0 = sensor not awake yet
 ];
 
+const ODO_MILES = true;      // the reference (UK) car's cluster counts miles; a km car would set this false
 const ACCEL_FLOOR = 682;      // accelerator reading with the pedal on the floor (mode scan, 14 Nov 2026)
 const CHARGE_MODES = { 0: 'Not charging', 1: 'Charging (3-pin / L1)', 2: 'Charging (wallbox / L2)', 3: 'Rapid charging' };
 const PLUG_STATES = { 0: 'Unplugged', 1: 'Partly plugged', 2: 'Plugged in' };
@@ -75,7 +78,7 @@ const carMoving = () => (S.data.speed ?? 0) > 5;
 
 /** Read one identifier and store its decoded value. */
 async function readCarDid(d) {
-  const v = await ecuRead(d.ecu, d.did);
+  const v = await ecuRead(d.ecu, d.did, 1500, !!d.fc);
   if (!v || v.length < d.len) {
     CD.miss[d.key] = (CD.miss[d.key] || 0) + 1;
     if (CD.miss[d.key] === 3) { CD.skip[d.key] = true; log(`${d.key} (${d.ecu} 22 ${d.did}): no reply, skipping`); }
