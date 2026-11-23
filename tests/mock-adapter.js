@@ -44,7 +44,7 @@ function MOCK() {
     addEventListener: (ev, fn) => { listener = fn; },
     startNotifications: async () => {},
     writeValue: async v => {
-      const c = dec.decode(v).replace('\r', '');
+      const c = dec.decode(v).replace(/[\r\n]+/g, '');                // every line ending, not just the first
       setTimeout(() => listener?.({ target: { value: new DataView(enc.encode(answer(c) + '\r\r>').buffer) } }), window.__lat ?? 70);
     },
   };
