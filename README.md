@@ -241,6 +241,7 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `charge.js` | Charging screen |
 | `healthtrip.js` | Health trip recording and report |
 | `scenery.js` | Roadside scenery on the Drive screen |
+| `tests/` | Automated checks for contributors (not part of the app): see `tests/README.md` |
 | `replay.js` | Drive replay: plays a recording back in Demo mode |
 | `driverec.js` | Drive recorder: everything on a drive, into one file |
 | `history.js` | Recent efficiency and range, charge log and costs, battery health trend |
