@@ -21,6 +21,7 @@ const SET_DEFAULTS = {
   voice: false,                                    // spoken updates
   nightDim: 'auto',                                // dim the screen with the headlights: 'auto' | 'off'
   limitNudge: true,                                // pulse the speed-limit sign when over it
+  cameras: true,                                   // speed and red-light cameras from OpenStreetMap on the Drive screen
   autoReconnect: true,                             // get back to the adapter by itself
   lastBackup: 0,                                   // when a backup file was last saved (ms)
   lastAdapter: null,                               // { id, name } of the adapter used last
@@ -146,6 +147,8 @@ function openSettings(section) {
         <input type="checkbox" data-sw="alerts" ${SET.alerts !== false ? 'checked' : ''}></label>
       <label class="switch-row"><span>Speed limit nudge <span class="mini">the limit sign pulses when you're more than 3 mph over (needs the real road shape)</span></span>
         <input type="checkbox" data-sw="limitNudge" ${SET.limitNudge !== false ? 'checked' : ''}></label>
+      <label class="switch-row"><span>Cameras <span class="mini">speed and red-light cameras mapped on OpenStreetMap, shown ahead (and spoken, with spoken updates on). Needs the real road shape</span></span>
+        <input type="checkbox" data-sw="cameras" ${SET.cameras !== false ? 'checked' : ''}></label>
       <label class="switch-row"><span>Dim the screen at night <span class="mini">while the headlights are on</span></span>
         <input type="checkbox" data-night ${SET.nightDim !== 'off' ? 'checked' : ''}></label>
       <label class="switch-row"><span>Spoken updates <span class="mini">battery milestones, charging started and stopped, alerts</span></span>
