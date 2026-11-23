@@ -16,6 +16,15 @@ module.exports = async ({ browser, base, assert, note }) => {
     assert.deepStrictEqual(errors, [], `page errors at ${size}`);
     await ctx.close();
   }
+  // Settings → Your data lists what leaves the phone, with each item's real state
+  {
+    const { ctx, page } = await open(browser, base, '', { settings: { realRoad: true, addons: { abrp: { enabled: true } } } });
+    await page.click('#btnSettings'); await page.evaluate(() => { document.querySelector('[data-sec="data"]').open = true; }); await sleep(300);
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.lv-row')].map(r => r.querySelector('b').textContent + '=' + r.querySelector('.pill').textContent));
+    for (const want of ['Map data for the road shape=On', 'A Better Route Planner=On', 'MQTT=Off', 'Home Assistant=Off', 'Leaf Dash itself=Always'])
+      assert.ok(rows.includes(want), `"What leaves this phone" should show ${want}: ${rows.join(', ')}`);
+    await ctx.close();
+  }
   // database upgrade from version 1 (before the drive recorder) keeps old health trip logs
   const { ctx, page } = await open(browser, base, 'manifest.webmanifest');
   await page.evaluate(() => new Promise(r => { const q = indexedDB.open('leafdash', 1); q.onupgradeneeded = () => q.result.createObjectStore('healthraw'); q.onsuccess = () => { const tx = q.result.transaction('healthraw', 'readwrite'); tx.objectStore('healthraw').put('old log', '123'); tx.oncomplete = () => { q.result.close(); r(); }; }; }));

@@ -78,6 +78,22 @@ const bkAgo = t => {
 /** Is there history worth protecting that hasn't been backed up for a month? */
 const bkDue = () => (HIS.health.length > 3 || HIS.charges.length > 0) && !HIS.demo && Date.now() - (SET.lastBackup || 0) > 30 * 864e5;
 
+/** Everything that can leave this phone, with whether it's on right now. Keep this list complete: any new outside
+ *  service must be added here (and to the README's "What leaves your phone"). */
+function leavesHtml() {
+  const ao = id => !!(typeof SET !== 'undefined' && SET.addons?.[id]?.enabled);
+  const row = (title, state, text) => `<div class="lv-row"><div class="row-between"><b>${title}</b><span class="pill ${state === 'On' ? 'eco' : ''}">${state}</span></div><p class="hint">${text}</p></div>`;
+  return `<div class="set-group"><div class="label">What leaves this phone</div>
+    ${row('Leaf Dash itself', 'Always', 'The app is loaded and updated from GitHub Pages (github.io). Like any website, GitHub sees your internet address.')}
+    ${row('Map data for the road shape', SET.realRoad ? 'On' : 'Off', 'Your position goes to two OpenStreetMap map servers (overpass-api.de, overpass.kumi.systems), asking for the roads within 700 m. Areas you\'ve driven are kept on this phone, so the same roads aren\'t asked for again. Settings → Drive screen.')}
+    ${row('Home Assistant', ao('homeassistant') ? 'On' : 'Off', 'The car data listed when you turned it on, to your own Home Assistant. Location only if you allowed it. Settings → Add-ons.')}
+    ${row('MQTT', ao('mqtt') ? 'On' : 'Off', 'The car data listed when you turned it on, to your own MQTT broker. Location only if you allowed it. Settings → Add-ons.')}
+    ${row('A Better Route Planner', ao('abrp') ? 'On' : 'Off', 'Charge, power, speed and (if allowed) location, to ABRP (api.iternio.com). Settings → Add-ons.')}
+    ${row('Files you share', 'When you tap Share', 'Recordings, reports, scans and backups go only where you send them.')}
+    <p class="hint">Add-ons never send anything in Demo mode. The VIN is never sent anywhere. There are no accounts, no analytics or tracking, no adverts and no crash reports. Your phone's own services are separate: Android provides the GPS position, and spoken updates use the phone's voice engine.</p>
+  </div>`;
+}
+
 /** The "Your data" section of Settings. */
 function bkSectionHtml() {
   return `<details class="set-sec${bkDue() ? ' due' : ''}" data-sec="data" name="ldset">
@@ -92,6 +108,7 @@ function bkSectionHtml() {
         <label class="btn ghost small">Restore from file<input type="file" accept=".json,application/json" hidden data-bk-file></label>
       </div>
       <p class="hint" data-bk-note>${BK.persisted === true ? 'The browser has agreed not to clear this data by itself.' : BK.persisted === false ? "The browser hasn't promised to keep this data if the phone runs short of space. Installing Leaf Dash as an app usually fixes that." : ''}</p>
+      ${leavesHtml()}
       </div>
     </details>`;
 }

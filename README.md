@@ -26,6 +26,19 @@ Leaf Dash can't change anything in your car. A single gate in `app.js` (`isReadO
 
 Everything else is rejected before it's sent, with no override: clearing codes, resets, writes, routines, session changes, and adapter EEPROM or baud changes. Add-ons never get access to the adapter at all.
 
+
+## What leaves your phone
+
+Everything Leaf Dash knows stays in the browser on your phone, except these, each listed with whether it's on in **Settings → Your data**:
+
+| What | Sent to | When |
+|---|---|---|
+| The app itself | GitHub Pages (github.io), which sees your internet address like any website | Loading and updating the app |
+| Your position, asking for the roads within 700 m | Two OpenStreetMap map servers: overpass-api.de and overpass.kumi.systems | Only with real road shape on (Settings → Drive screen). Areas you've driven are kept on the phone and not asked for again |
+| The car data you chose, and location only if allowed | Your own Home Assistant or MQTT broker, or ABRP (api.iternio.com) | Only for an add-on you've turned on, after a confirmation. Never in Demo mode |
+| Recordings, reports, scans, backups | Wherever you send them | Only when you tap Share or Save |
+
+The VIN is never sent. There are no accounts, no analytics or tracking, no adverts and no crash reports. Your phone's own services are separate: Android provides the GPS position, and spoken updates use the phone's voice engine.
 ## Screens
 
 | Tab | What's on it |

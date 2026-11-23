@@ -606,3 +606,7 @@ body.night::after { opacity: .45; }
 .rp-time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 1; }
 .rp-seek { width: 100%; margin: 8px 0; accent-color: var(--blue); }
 .rp-bar .btn.small { padding: 6px 10px; }
+/* "What leaves this phone" (backup.js) */
+.lv-row { padding: 8px 0; border-top: 1px solid var(--line); }
+.lv-row b { font-weight: 600; font-size: 14px; }
+.lv-row .hint { margin: 4px 0 0; }
