@@ -175,7 +175,7 @@
         </div>
         <p class="hint">Records everything the app sees on a drive into one file you can share: car values, adapter replies, GPS, the map data and what the road drawing matched. Start it before you set off, keep Leaf Dash on screen, and stop it when you park. The VIN is never recorded, but the file does contain your route. The last three recordings are kept here.</p>
         <p class="hint hidden" id="recRoadOff">Real road shape is off, so no map data will be recorded. <button id="recRoadOn" class="btn ghost small">Turn it on</button></p>
-        <button id="recBtn" class="btn primary small">Start recording</button>
+        <div><button id="recBtn" class="btn primary small">Start recording</button> <button id="rpOpen" class="btn ghost small">Replay a file…</button><input type="file" id="rpFile" accept=".gz,.jsonl,application/gzip" hidden></div>
         <div class="label hidden" id="recPastLabel" style="margin-top:14px">Recordings</div>
         <div id="recPast" class="chg-list"></div>
       </div>
@@ -268,6 +268,7 @@
   <script src="addons.js"></script>
   <script src="demoroute.js"></script>
   <script src="demopanel.js"></script>
+  <script src="replay.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

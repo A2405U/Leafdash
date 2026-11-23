@@ -258,12 +258,16 @@ async function recPast() {
     return `<div class="chg-row rec-row">
       <span class="chg-when"><b>${esc(htWhen(m.start))}</b><span class="mini">${esc(what)}</span></span>
       <span class="chg-mid">${Math.round(live ? (Date.now() - REC.t0) / 60e3 : m.minutes || 0)} min</span>
-      <span class="chg-cost"><button class="btn ghost small" data-rec-share="${m.id}">Share</button>${live ? '' : ` <button class="btn ghost small" data-rec-del="${m.id}" aria-label="Delete recording">✕</button>`}</span></div>`;
+      <span class="chg-cost">${live ? '' : `<button class="btn ghost small" data-rec-play="${m.id}">Replay</button> `}<button class="btn ghost small" data-rec-share="${m.id}">Share</button>${live ? '' : ` <button class="btn ghost small" data-rec-del="${m.id}" aria-label="Delete recording">✕</button>`}</span></div>`;
   }).join('');
 }
 $('recBtn')?.addEventListener('click', () => REC.on ? recStop('stopped') : recStart());
 $('recRoadOn')?.addEventListener('click', () => openSettings('drive'));
+$('rpOpen')?.addEventListener('click', () => $('rpFile').click());
+$('rpFile')?.addEventListener('change', e => { const f = e.target.files?.[0]; e.target.value = ''; if (f && typeof rpFromFile === 'function') rpFromFile(f); });
 $('recPast')?.addEventListener('click', async e => {
+  const pl = e.target.closest('[data-rec-play]');
+  if (pl && typeof rpFromRecording === 'function') { pl.disabled = true; pl.textContent = 'Loading…'; await rpFromRecording(+pl.dataset.recPlay); pl.disabled = false; pl.textContent = 'Replay'; return; }
   const s = e.target.closest('[data-rec-share]');
   if (s) { s.disabled = true; s.textContent = 'Packing…'; await recShare(+s.dataset.recShare); s.disabled = false; s.textContent = 'Share'; return; }
   const d = e.target.closest('[data-rec-del]');

@@ -181,6 +181,6 @@ function demoRouteApply(d) {
 }
 
 LeafDash.on('mode', m => {
-  if (m === 'demo' && SET.demoRoute !== false && !S.demoCharging) drtStart();
+  if (m === 'demo' && SET.demoRoute !== false && !S.demoCharging && !S.replay) drtStart();   // a replay brings its own road
   if (m !== 'demo') drtStop();
 });

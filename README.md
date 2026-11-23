@@ -64,6 +64,10 @@ Tap **Start recording** before you set off and **Stop recording** when you park.
 
 Keep Leaf Dash on screen while recording (the screen is kept awake). It's saved every 5 s, so closing the app loses at most a few seconds. The last three recordings are kept, and **Share** packs one into a `leafdash-drive-*.jsonl.gz` file (JSON Lines, gzipped). The VIN is never recorded, but the file does contain your route, so only share it with people you trust. Recordings aren't part of a backup file.
 
+## Drive replay (Developer mode → Debug)
+
+Each recording has a **Replay** button, and **Replay a file…** opens a `leafdash-drive-*.jsonl.gz` from the phone's storage. The drive plays back in Demo mode: the GPS track drives the road drawing as it did in the car, using the map data saved in the recording (nothing is downloaded), and speed, power, gear, cells and lights follow the drive. A bar on the Drive screen has pause, 1×/2×/4×/8×, a slider to move through the drive, **Lose GPS 15 s** (to see what happens in a tunnel) and **Next junction** (jumps to just before the next junction, roundabout, lights or zebra). Being Demo mode, nothing is sent to add-ons or saved to the history. Tap ✕ or **Stop demo** to finish.
+
 ## Health trip recording (Developer mode → Debug)
 
 Tick **Record my next trip**, then drive. Recording starts when you pull away and stops after 3 minutes parked in P, when you disconnect, or when you tap *Stop now* (3 hour cap). During the trip cells are read every 2 s. At the end you get a report with distance, efficiency, SoC used, SOH/Hx, an estimated pack resistance, voltage sag at peak power, cell spread at rest and under load, which cell drops lowest, battery temperature, charts, and an estimated resistance for each of the 96 cell pairs, with weak ones highlighted. **Share report** saves a standalone HTML page. **Share raw log** saves a CSV with every sample and cell snapshot. Resistance figures are estimates: a trip with a few firm accelerations gives the best numbers. Try the report with `?healthdemo`.
@@ -237,6 +241,7 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `charge.js` | Charging screen |
 | `healthtrip.js` | Health trip recording and report |
 | `scenery.js` | Roadside scenery on the Drive screen |
+| `replay.js` | Drive replay: plays a recording back in Demo mode |
 | `driverec.js` | Drive recorder: everything on a drive, into one file |
 | `history.js` | Recent efficiency and range, charge log and costs, battery health trend |
 | `alerts.js` | Gentle alerts, spoken updates, night dimming, speed limit nudge |
