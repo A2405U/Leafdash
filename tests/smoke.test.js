@@ -25,6 +25,17 @@ module.exports = async ({ browser, base, assert, note }) => {
       assert.ok(rows.includes(want), `"What leaves this phone" should show ${want}: ${rows.join(', ')}`);
     await ctx.close();
   }
+  // doctored values (from a replay file or a backup) are shown as text, never as page content
+  {
+    const { ctx, page } = await open(browser, base, '?demo&view=dash', { settings: { carImage: 'x" onerror="alert(1)' } });
+    const r = await page.evaluate(() => {
+      stopDemo(); S.data.gear = '<b id="inj1">D</b>'; S.data.soc = '<b id="inj2">9</b>'; renderDash(true);
+      return { gear: !!document.getElementById('inj1'), soc: !!document.getElementById('inj2'), car: !!document.querySelector('#car img') };
+    });
+    assert.ok(!r.gear && !r.soc, 'a doctored value was added to the page as content');
+    assert.ok(!r.car, 'a doctored car photo setting was used');
+    await ctx.close();
+  }
   // database upgrade from version 1 (before the drive recorder) keeps old health trip logs
   const { ctx, page } = await open(browser, base, 'manifest.webmanifest');
   await page.evaluate(() => new Promise(r => { const q = indexedDB.open('leafdash', 1); q.onupgradeneeded = () => q.result.createObjectStore('healthraw'); q.onsuccess = () => { const tx = q.result.transaction('healthraw', 'readwrite'); tx.objectStore('healthraw').put('old log', '123'); tx.oncomplete = () => { q.result.close(); r(); }; }; }));
