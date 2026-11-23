@@ -17,8 +17,11 @@
    it's shown instead, sized and placed to sit in the lane. */
 function renderCar() {
   const el = $('car');
-  el.innerHTML = SET.carImage ? `<img src="${SET.carImage}" alt="Your car">` : '';
-  el.classList.toggle('hidden', !SET.carImage);
+  // built as an element, not text, and only from an image data URL: a doctored backup file can't add anything else
+  const ok = typeof SET.carImage === 'string' && /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(SET.carImage);
+  el.replaceChildren();
+  if (ok) { const img = new Image(); img.src = SET.carImage; img.alt = 'Your car'; el.appendChild(img); }
+  el.classList.toggle('hidden', !ok);
 }
 
 /* ---------------- speed ---------------- */

@@ -52,7 +52,7 @@ LeafDash.registerWidget({
     const pill = (on, txt, cls) => `<span class="pill ${on ? cls : ''}">${txt}</span>`;
     el.innerHTML = `<div class="label">Status</div>
       <div class="w-status">
-        <span class="w-gear">${d.gear ?? '–'}</span>
+        <span class="w-gear">${esc(d.gear ?? '–')}</span>
         ${pill(d.ready, d.ready == null ? 'Status —' : d.ready ? 'READY' : 'Not ready', 'drive')}
         ${pill(d.eco, 'ECO', 'eco')}
         ${pill(d.ePedal, 'e-Pedal', 'regen')}
@@ -125,7 +125,7 @@ function statWidget(id) {
   if (!m) return null;
   return {
     id, name: m.label, group: m.group, w: 1, h: 1,
-    render(el) { const f = fmtMetric(m.id); el.innerHTML = `<div class="label">${m.label}</div><div class="w-val">${f.v}<small>${f.u}</small></div>`; },
+    render(el) { const f = fmtMetric(m.id); el.innerHTML = `<div class="label">${esc(m.label)}</div><div class="w-val">${esc(f.v)}<small>${esc(f.u)}</small></div>`; },
   };
 }
 const getWidget = id => id.startsWith('m:') ? statWidget(id) : LeafDash.widgets[id];
