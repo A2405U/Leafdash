@@ -214,6 +214,7 @@
           <div class="pill" id="snStatus">Stopped</div>
         </div>
         <p class="hint">Silent monitor (<code>ATCSM1</code>): the adapter only listens and never transmits or acknowledges. Battery polling pauses while it runs. Bytes that just changed light up. Tap a row to see its bits.</p>
+        <p class="hint">Of limited use on a 2018+ Leaf: the car's gateway only passes request/reply traffic to the OBD port, so there's little to hear. Some adapters, including the LELink², can't listen silently at all, and the sniffer then stays off. The mode scanner above is the way to find values on these cars.</p>
         <div class="cmd">
           <input id="snFilter" value="11A" placeholder="CAN ID, e.g. 11A (blank = all)" autocapitalize="characters" autocomplete="off">
           <button id="btnSniff" class="btn primary small">Start</button>
