@@ -773,19 +773,21 @@ function osmOverlay() {
     const isCam = x => x.kind === 'speedcam' || x.kind === 'redcam';
     const ahead = [...(OSM.path.feats || []), ...(OSM.path.rbts || []).map(r => ({ kind: 'rbt', s: r.sIn }))]
       .filter(x => x.s > OSM.sCar + 3 && x.s < OSM.sCar + 300 && !(isCam(x) && SET.cameras === false)).sort((a, b) => a.s - b.s);
-    // a camera wins over the lights or junction it sits at
-    const f = ahead.find(x => isCam(x) && ahead[0] && x.s - ahead[0].s < 40) || ahead[0];
-    next.classList.toggle('hidden', !f);
+    // things within 30 m of each other share one pill ("Red-light camera + lights"); at most two pills
+    const groups = [];
+    for (const x of ahead) { const g = groups[groups.length - 1]; if (g && x.s - g[0].s < 30) { if (!g.some(y => y.kind === x.kind)) g.push(x); } else groups.push([x]); }
+    const ORDER = ['redcam', 'speedcam', 'lights', 'zebra', 'rbt', 'mini'];
+    groups.forEach(g => g.sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind)));
+    next.classList.toggle('hidden', !groups.length);
     const names = { lights: 'Lights', zebra: 'Zebra', rbt: 'Roundabout', mini: 'Mini roundabout', speedcam: 'Speed camera', redcam: 'Red-light camera' };
     // spoken once per camera (only with spoken updates on)
     for (const c of ahead.filter(isCam)) {
       const p = pathAt(c.s), key = `${c.kind}:${Math.round(p.x / 25)}:${Math.round(p.y / 25)}`;
       if (!OSM.said?.has(key)) { (OSM.said ||= new Set()).add(key); if (typeof say === 'function') say(`${names[c.kind]} ahead`); }
     }
-    if (f) {
-      const m = f.s - OSM.sCar, d = SET.units === 'mph' ? `${Math.max(10, Math.round(m * 1.0936 / 10) * 10)} yd` : `${Math.max(10, Math.round(m / 10) * 10)} m`;
-      next.innerHTML = `<i class="rn-${f.kind === 'mini' ? 'rbt' : f.kind}"></i>${names[f.kind]} · ${d}`;
-    }
+    const dist = m => SET.units === 'mph' ? `${Math.max(10, Math.round(m * 1.0936 / 10) * 10)} yd` : `${Math.max(10, Math.round(m / 10) * 10)} m`;
+    next.innerHTML = groups.slice(0, 2).map(g => `<div class="rn-row">${g.map(x => `<i class="rn-${x.kind === 'mini' ? 'rbt' : x.kind}"></i>`).join('')}${
+      g.map((x, i) => i ? names[x.kind].toLowerCase() : names[x.kind]).join(' + ')} · ${dist(g[0].s - OSM.sCar)}</div>`).join('');
   }
   const li = laneInfo(pathAt(OSM.sCar).seg.w, pathAt(OSM.sCar).seg.dir);
   const lim = li.limit;

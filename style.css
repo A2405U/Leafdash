@@ -501,8 +501,10 @@ label.btn { cursor: pointer; }
 .dp-sl b { text-align: right; font-variant-numeric: tabular-nums; }
 @media (min-width: 900px) { .demo-fab { bottom: 20px; } .demo-panel { left: auto; right: 12px; width: 380px; bottom: 68px; max-height: 60vh; } .demo-panel.top { top: 76px; } }
 
-.road-next { margin: 8px 0 0 auto; width: max-content; font: 600 12px system-ui; color: var(--text); background: rgba(10,14,19,.7);
+.road-next { margin: 8px 0 0 auto; width: max-content; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.road-next .rn-row { font: 600 12px system-ui; color: var(--text); background: rgba(10,14,19,.7);
   padding: 4px 10px 4px 8px; border-radius: 99px; display: flex; align-items: center; gap: 6px; }
+.road-next .rn-row + .rn-row { opacity: .75; }
 .road-next i { display: inline-block; width: 8px; height: 18px; border-radius: 3px; background: #161b22; border: 1px solid #6b7785;
   background-image: radial-gradient(circle at 50% 20%, #ff5a5a 2px, transparent 2.5px), radial-gradient(circle at 50% 50%, #ffb42e 2px, transparent 2.5px), radial-gradient(circle at 50% 80%, #46dc78 2px, transparent 2.5px); }
 .road-next i.rn-rbt { width: 13px; height: 13px; border-radius: 50%; background: none; border: 3px solid #e8eef5; }

@@ -1,7 +1,7 @@
 'use strict';
 /* Speed and red-light cameras from OpenStreetMap: every common way of tagging them is recognised, an enforcement
-   relation's "device" becomes a camera, and on the demo route each camera shows in the "next" pill (taking priority
-   over the lights it sits at) and is drawn at the kerb. The Cameras switch hides them. */
+   relation's "device" becomes a camera, and on the demo route each camera shows in the "next" pills (sharing one with the
+   lights it sits at, the next thing ahead underneath). The Cameras switch hides them. */
 const { open, sleep } = require('./helpers.js');
 module.exports = async ({ browser, base, assert, note }) => {
   const { ctx, page, errors } = await open(browser, base, '?demo');
@@ -25,15 +25,15 @@ module.exports = async ({ browser, base, assert, note }) => {
     let best = null; for (let d = 0; d < R.len; d += 2) { const q = R.posAt(d); const dd = Math.hypot(q.x - cam.x, q.y - cam.y); if (!best || dd < best.dd) best = { dd, d }; }
     DRT.s = Math.max(0, best.d - 150); DRT.stopsDone = new Set(R.stops); DRT.waitUntil = 0;
     await new Promise(r => setTimeout(r, 4000));
-    return $('roadNext').classList.contains('hidden') ? '' : $('roadNext').textContent;
+    return $('roadNext').classList.contains('hidden') ? '' : [...$('roadNext').querySelectorAll('.rn-row')].map(r => r.textContent).join(' | ');
   }, kind);
   const sp = await pill('speedcam'), rd = await pill('redcam');
-  assert.ok(/^Speed camera · \d+ yd$/.test(sp), `speed camera not shown ahead: "${sp}"`);
-  assert.ok(/^Red-light camera · \d+ yd$/.test(rd), `red-light camera not shown ahead of its lights: "${rd}"`);
+  assert.ok(/^Speed camera · \d+ yd/.test(sp), `speed camera not shown ahead: "${sp}"`);
+  assert.ok(/^Red-light camera \+ lights · \d+ yd/.test(rd), `red-light camera and its lights not shown together: "${rd}"`);
   await page.evaluate(() => { SET.cameras = false; }); await sleep(1200);
   const off = await page.evaluate(() => $('roadNext').textContent);
   assert.ok(!/camera/.test(off), 'cameras still shown with the switch off');
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`tags recognised; "${sp}", "${rd}"; switch hides them`);
+  note(`tags recognised; "${sp}"; "${rd}"; switch hides them`);
   await ctx.close();
 };
