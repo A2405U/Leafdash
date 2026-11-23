@@ -598,3 +598,11 @@ body.night::after { opacity: .45; }
 .ds-add input { font: 14px system-ui; }
 /* locked while the car is moving (alerts.js) */
 .drive-locked #btnSettings, .drive-locked #btnDriveSettings, .drive-locked #btnPrices, .drive-locked .tabs button[data-view="debug"], .drive-locked #recDot { opacity: .35; }
+/* drive replay controls (replay.js) */
+.rp-bar { position: fixed; left: 8px; right: 8px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 61; background: rgba(14,18,24,.95);
+  backdrop-filter: blur(10px); border: 1px solid rgba(76,195,255,.3); border-radius: 16px; padding: 8px 10px; box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+.rp-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.rp-row .seg button { padding: 5px 9px; }
+.rp-time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 1; }
+.rp-seek { width: 100%; margin: 8px 0; accent-color: var(--blue); }
+.rp-bar .btn.small { padding: 6px 10px; }

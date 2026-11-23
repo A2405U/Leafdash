@@ -94,7 +94,7 @@ function driveFrame(ts) {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const d = S.data, kw = d.kw ?? 0;
-  const sp = currentSpeed(), mps = sp.mps ?? 0;
+  const sp = currentSpeed(), mps = (sp.mps ?? 0) * (typeof rpRate === 'function' ? rpRate() : 1);   // a replay at 4× scrolls 4× faster
 
   // charging: swap the road for the side view with the battery filling up
   chargeTick(d);
