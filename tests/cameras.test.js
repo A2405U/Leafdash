@@ -10,8 +10,12 @@ module.exports = async ({ browser, base, assert, note }) => {
     { highway: 'speed_camera' }, { highway: 'speed_camera', speed_camera: 'traffic_signals' }, { highway: 'red_light_camera' },
     { man_made: 'surveillance', surveillance: 'red_light' }, { highway: 'speed_camera', note: 'Red light camera' },
     { man_made: 'surveillance', surveillance: 'public' }, { highway: 'traffic_signals' },
+    { highway: 'traffic_signals', enforcement: 'red_light_camera' }, { highway: 'traffic_signals', enforcement: 'traffic_signals' },
   ].map(featKind));
-  assert.deepStrictEqual(kinds, ['speedcam', 'redcam', 'redcam', 'redcam', 'redcam', null, 'lights'], 'camera tags not recognised');
+  assert.deepStrictEqual(kinds, ['speedcam', 'redcam', 'redcam', 'redcam', 'redcam', null, 'lights', 'redcam', 'redcam'], 'camera tags not recognised');
+  // lights tagged with a camera keep their lights too
+  const both = await page.evaluate(() => { osmLoad({ elements: [{ type: 'node', id: 4242, lat: 51.509, lon: -0.121, tags: { highway: 'traffic_signals', enforcement: 'red_light_camera' } }] }); return [OSM.feats.get(4242)?.kind, OSM.feats.get('l4242')?.kind]; });
+  assert.deepStrictEqual(both, ['redcam', 'lights'], 'lights with a camera tag should give both a camera and lights');
   const rel = await page.evaluate(() => { osmLoad({ elements: [{ type: 'relation', id: 77, tags: { type: 'enforcement', enforcement: 'traffic_signals' },
     members: [{ type: 'node', ref: 5, role: 'device', lat: 51.51, lon: -0.12 }, { type: 'node', ref: 6, role: 'from', lat: 51.5101, lon: -0.12 }] }] }); return OSM.feats.get('r77:5')?.kind; });
   assert.strictEqual(rel, 'redcam', 'enforcement relation device not loaded as a camera');

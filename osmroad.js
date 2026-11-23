@@ -152,7 +152,7 @@ function featKind(t) {
 /** Speed or red-light camera, from the different ways they're tagged in OpenStreetMap (they vary a lot). */
 function camKind(t) {
   const note = `${t.note || ''} ${t.description || ''} ${t.name || ''}`;
-  const red = t.highway === 'red_light_camera' || t.speed_camera === 'traffic_signals' || t.enforcement === 'traffic_signals' || /red.?light/i.test(note)
+  const red = t.highway === 'red_light_camera' || t.speed_camera === 'traffic_signals' || /^(traffic_signals|red_?light(_camera)?)$/.test(t.enforcement || '') || /red.?light/i.test(note)
     || (t.man_made === 'surveillance' && /red_light|traffic_signals/.test(`${t.surveillance || ''} ${t['surveillance:type'] || ''}`));
   if (red && (t.highway === 'speed_camera' || t.highway === 'red_light_camera' || t.man_made === 'surveillance' || t.enforcement)) return 'redcam';
   if (t.highway === 'speed_camera' || t.enforcement === 'maxspeed' || t.enforcement === 'average_speed') return 'speedcam';
@@ -170,8 +170,10 @@ function osmLoad(json, cached = false) {
       continue;
     }
     if (el.type === 'node') {
-      const kind = featKind(el.tags || {});
+      const t = el.tags || {}, kind = featKind(t);
       if (kind && !OSM.feats.has(el.id)) OSM.feats.set(el.id, { id: el.id, kind, ...toXY(el.lat, el.lon) });
+      // traffic lights that also carry a camera tag (e.g. enforcement=red_light_camera on the lights): show both
+      if (t.highway === 'traffic_signals' && kind !== 'lights' && !OSM.feats.has('l' + el.id)) OSM.feats.set('l' + el.id, { id: 'l' + el.id, kind: 'lights', ...toXY(el.lat, el.lon) });
       continue;
     }
     if (el.type !== 'way' || !el.geometry || OSM.ways.has(el.id)) continue;
