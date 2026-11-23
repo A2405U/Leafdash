@@ -28,10 +28,6 @@ const CURRENT_SIGN = -1;     // ZE1 reports discharge as negative; flipped so dr
 const G61_SOH = null;        // e.g. { at: 9, len: 2, scale: 1 / 100 } once confirmed
 const NEW_AH = 115.44;       // new 40 kWh pack Ah: matches LeafSpy (105.89 Ah → 91.73%)
 
-/* DRIVE MODE: not decoded yet. Use the Debug → CAN sniffer to find which
-   byte/bit changes when you press ECO or shift D↔B, then fill in decode().
-   Community docs point at broadcast ID 0x11A, which may or may not reach
-   the OBD port on a 2018+ Leaf. */
 /* VCM (vehicle control module): request 0x797, reply 0x79A. On 2018+ cars
    the gateway only passes request/reply traffic to the OBD port, so gear and
    ECO have to be asked for here rather than sniffed. All reads use service
@@ -41,10 +37,6 @@ const VCM_GEAR = '1156';     // reply byte: 1=P 2=R 3=N 4=D (community-documente
 const GEARS = { 1: 'P', 2: 'R', 3: 'N', 4: 'D', 7: 'B' };   // confirmed on a 2021 ZE1 (B reports 7)
 // ECO comes from VCM 22 13 1B bit 0x10 (see cardata.js).
 
-const DRIVE = {
-  id: '11A',
-  decode: null,   // e.g. bytes => ({ gear: ['P','R','N','D','B'][bytes[0] >> 4], eco: !!(bytes[1] & 0x10) })
-};
 const KW_MIN = -50, KW_MAX = 110; // power strip range (Leaf 40 kWh: 110 kW motor)
 
 const INIT = [
@@ -606,7 +598,7 @@ function render() {
   if (typeof hisRender === 'function') hisRender();
 }
 
-const KM_MI = 0.621371, KPA_PSI = 0.145038;
+const KPA_PSI = 0.145038;
 function renderCarDataList() {
   $('cdList').innerHTML = CAR_DIDS.map(dd => {
     const raw = CD.raw[dd.key], v = S.data[dd.key];
@@ -824,6 +816,7 @@ async function startSniff() {
   } catch (e) {
     log('Sniffer: ' + e.message);
     await stopSniff();
+    if (/silent/.test(e.message)) setSnStatus('Not supported by this adapter');
   }
 }
 
@@ -832,7 +825,6 @@ async function stopSniff() {
   if (SN.stop) { await SN.stop(); SN.stop = null; }
   for (const c of ['ATH0', 'ATCRA7BB']) { try { await S.elm.send(c); } catch {} }
   S.ecu = null; S.fc = null;                              // force the next read to set its computer again
-  S.ecu = null;
   S.sniffing = false; setSnStatus();
   log('Sniffer stopped, battery polling resumed');
 }
@@ -848,9 +840,6 @@ function onSniffLine(line) {
   data.forEach((b, i) => { if (fr.count && fr.bytes[i] !== b) fr.changed[i] = now; });
   fr.bytes = data; fr.count++;
   SN.dirty = true;
-  if (DRIVE.decode && id === DRIVE.id) {
-    try { Object.assign(S.data, DRIVE.decode(data)); render(); } catch {}
-  }
 }
 
 function renderSniff() {

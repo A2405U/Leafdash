@@ -69,6 +69,7 @@ function rpTick() {
 /** Jump to a time: rebuild the car's values and the map as they were then. */
 function rpSeek(t) {
   RP.t = Math.max(0, Math.min(RP.dur, t));
+  RP.lostUntil = -1;                                                      // a jump starts afresh, GPS back
   S.data = {};
   const firstFix = RP.lines.find(l => l.k === 'gps' && l.t >= RP.t) || RP.lines.find(l => l.k === 'gps');
   OSM.O = firstFix ? { lat: firstFix.lat, lon: firstFix.lon } : null;

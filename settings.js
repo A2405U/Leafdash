@@ -186,7 +186,7 @@ function openSettings(section) {
     <details class="set-sec" data-sec="about" name="ldset">
       <summary><span class="ss-title">About</span><span class="ss-sub" data-sub="about"></span></summary>
       <div class="ss-body">
-      <p class="hint">Leaf Dash ${LeafDash.version}. <b>Read-only by design:</b> the app can only send adapter set-up commands and read requests (21 xx / 22 xx xx). Anything that could change the car is blocked before it reaches the adapter, with no override. Settings and any add-on credentials are stored only in this browser.</p>
+      <p class="hint">Leaf Dash ${LeafDash.version}. <b>Read-only by design:</b> the app can only send adapter set-up commands and read requests (21 xx / 22 xx xx). Anything that could change the car is blocked before it reaches the adapter, with no override. Settings and any add-on credentials are stored only in this browser. What leaves this phone is listed in Your data.</p>
       <p class="hint">Don't use your phone while driving. Settings and the Debug tab lock while the car is moving.</p>
       <p class="hint">Copyright (C) 2026 A2405U and contributors. Free software under the GNU GPL v3.0, with no warranty. Not affiliated with Nissan; Nissan and Leaf are trademarks of Nissan.</p>
       </div>

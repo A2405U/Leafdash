@@ -36,7 +36,7 @@ const CAR_DIDS = [
   { key: 'ready',      ecu: 'vcm', did: '1304', tier: 5, drive: 30,  len: 1, dec: v => (v[0] & 0x80) === 0x80 },
   { key: 'ambient',    ecu: 'vcm', did: '115D', tier: 10, len: 1, dec: v => v[0] / 2 - 40, unit: '°C' },
   { key: 'chargeMode', ecu: 'vcm', did: '114E', tier: 5, drive: 60,  len: 1, dec: v => v[0] },
-  { key: 'plug',       ecu: 'vcm', did: '1234', tier: 10, drive: 60, len: 1, dec: v => v[0] },
+  { key: 'plug',       ecu: 'vcm', did: '1234', tier: 10, drive: 60, len: 1, dec: v => v[0] },     // 0 unplugged, 1 partly plugged, 2 plugged in
   { key: 'obcKw',      ecu: 'vcm', did: '1236', tier: 5, drive: 60,  len: 2, dec: v => s16(v, 0) * 100 / 1000, unit: 'kW' },
   { key: 'qc',         ecu: 'vcm', did: '1203', tier: 60, len: 2, dec: v => u16(v, 0) },
   { key: 'l1l2',       ecu: 'vcm', did: '1205', tier: 60, len: 2, dec: v => u16(v, 0) },
@@ -54,7 +54,6 @@ const CAR_DIDS = [
 const ODO_MILES = true;      // the reference (UK) car's cluster counts miles; a km car would set this false
 const ACCEL_FLOOR = 682;      // accelerator reading with the pedal on the floor (mode scan, 14 Nov 2026)
 const CHARGE_MODES = { 0: 'Not charging', 1: 'Charging (3-pin / L1)', 2: 'Charging (wallbox / L2)', 3: 'Rapid charging' };
-const PLUG_STATES = { 0: 'Unplugged', 1: 'Partly plugged', 2: 'Plugged in' };
 
 /* per-identifier status: last raw reply, misses (unsupported ones get skipped) */
 const CD = { raw: {}, miss: {}, skip: {}, vin: null };
