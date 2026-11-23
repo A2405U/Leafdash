@@ -55,6 +55,7 @@ function drtBuild() {
   const lon = gen(N1, deg(90), [['S', 110], ['L', 220, 22], ['S', 70], ['R', 200, 44], ['S', 60], ['L', 220, 22], ['S', 140]], N1);
   way({ highway: 'primary', name: 'High Road', ref: 'A105', maxspeed: '30 mph' }, lon.pts);
   feats.push({ kind: 'lights', p: at(lon.pts, 24) });
+  feats.push({ kind: 'speedcam', p: at(lon.pts, 60) });
   way({ highway: 'tertiary', name: 'Church Street', maxspeed: '30 mph' }, gen(at(lon.pts, 17), deg(180), [['S', 50], ['L', 60, 30], ['S', 40]], at(lon.pts, 17)).pts);
   const N2 = lon.end;
   way({ highway: 'primary', name: 'High Road', ref: 'A105', maxspeed: '30 mph' }, gen(N2, lon.h, [['S', 160]], N2).pts);
@@ -73,6 +74,7 @@ function drtBuild() {
   const N5 = off.end;
   // Station Road B-road at the lights: right is a branch, we turn left
   feats.push({ kind: 'lights', p: N5 });
+  feats.push({ kind: 'redcam', p: N5 });
   way({ highway: 'secondary', name: 'Station Road', ref: 'B450', maxspeed: '40 mph' }, gen(N5, off.h + Math.PI / 2, [['S', 140]], N5).pts);
   const stnTags = { highway: 'secondary', name: 'Station Road', ref: 'B450', maxspeed: '40 mph' };
   const stnA = gen(N5, off.h - Math.PI / 2, [['S', 150]], N5);
@@ -128,7 +130,7 @@ function drtStart() {
   const ll = p => ({ lat: O.lat + p.y / 110540, lon: O.lon + p.x / (111320 * Math.cos(O.lat * Math.PI / 180)) });
   osmLoad({ elements: [
     ...R.ways.map(w => ({ type: 'way', id: w.id, tags: w.tags, nodes: w.pts.map(p => p.id), geometry: w.pts.map(ll) })),
-    ...R.feats.map((f, i) => ({ type: 'node', id: 9000 + i, ...ll(f.p), tags: f.kind === 'lights' ? { highway: 'traffic_signals' } : f.kind === 'mini' ? { highway: 'mini_roundabout' } : { highway: 'crossing', crossing: 'uncontrolled', crossing_ref: 'zebra' } })),
+    ...R.feats.map((f, i) => ({ type: 'node', id: 9000 + i, ...ll(f.p), tags: f.kind === 'lights' ? { highway: 'traffic_signals' } : f.kind === 'mini' ? { highway: 'mini_roundabout' } : f.kind === 'speedcam' ? { highway: 'speed_camera', maxspeed: '30 mph' } : f.kind === 'redcam' ? { highway: 'speed_camera', speed_camera: 'traffic_signals' } : { highway: 'crossing', crossing: 'uncontrolled', crossing_ref: 'zebra' } })),
   ] });
   DRT.ll = ll;
   let last = performance.now();

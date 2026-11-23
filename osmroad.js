@@ -120,7 +120,8 @@ async function osmFetch(lat, lon) {
   } catch {}
   if (Date.now() < OSM.nextTry) { OSM.busy = false; return; }
   const at = `around:700,${lat.toFixed(5)},${lon.toFixed(5)}`;
-  const q = `[out:json][timeout:15];(way(${at})[highway~"${OSM_HW}"];node(${at})[highway~"^(traffic_signals|crossing|mini_roundabout)$"];);out body geom qt;`;
+  // roads; lights, crossings, mini-roundabouts; speed and red-light cameras in the usual ways they're mapped
+  const q = `[out:json][timeout:15];(way(${at})[highway~"${OSM_HW}"];node(${at})[highway~"^(traffic_signals|crossing|mini_roundabout|speed_camera|red_light_camera)$"];node(${at})[man_made=surveillance][surveillance~"red_light|traffic"];rel(${at})[type=enforcement];);out body geom qt;`;
   for (const url of OSM_SERVERS) {
     try {
       // form-encoded POST is a "simple" request, so no CORS preflight is needed
@@ -142,14 +143,32 @@ async function osmFetch(lat, lon) {
 
 /** Traffic lights (junction or crossing) and zebra crossings; other crossings are ignored. */
 function featKind(t) {
+  const cam = camKind(t); if (cam) return cam;
   if (t.highway === 'traffic_signals' || t.crossing === 'traffic_signals' || t['crossing:signals'] === 'yes') return 'lights';
   if (t.crossing === 'zebra' || t.crossing_ref === 'zebra') return 'zebra';
   if (t.highway === 'mini_roundabout') return 'mini';
   return null;
 }
+/** Speed or red-light camera, from the different ways they're tagged in OpenStreetMap (they vary a lot). */
+function camKind(t) {
+  const note = `${t.note || ''} ${t.description || ''} ${t.name || ''}`;
+  const red = t.highway === 'red_light_camera' || t.speed_camera === 'traffic_signals' || t.enforcement === 'traffic_signals' || /red.?light/i.test(note)
+    || (t.man_made === 'surveillance' && /red_light|traffic_signals/.test(`${t.surveillance || ''} ${t['surveillance:type'] || ''}`));
+  if (red && (t.highway === 'speed_camera' || t.highway === 'red_light_camera' || t.man_made === 'surveillance' || t.enforcement)) return 'redcam';
+  if (t.highway === 'speed_camera' || t.enforcement === 'maxspeed' || t.enforcement === 'average_speed') return 'speedcam';
+  return null;
+}
 function osmLoad(json, cached = false) {
   window.LeafDash?.emit('osm', cached ? { ...json, cached: true } : json);   // for the drive recorder
   for (const el of json.elements || []) {
+    if (el.type === 'relation') {                                        // enforcement: the camera is the "device" member
+      const kind = el.tags?.type === 'enforcement' ? camKind(el.tags) : null;
+      if (kind) for (const m of el.members || []) if (m.role === 'device' && m.type === 'node' && m.lat != null) {
+        const id = `r${el.id}:${m.ref}`;
+        if (!OSM.feats.has(id)) OSM.feats.set(id, { id, kind, ...toXY(m.lat, m.lon) });
+      }
+      continue;
+    }
     if (el.type === 'node') {
       const kind = featKind(el.tags || {});
       if (kind && !OSM.feats.has(el.id)) OSM.feats.set(el.id, { id: el.id, kind, ...toXY(el.lat, el.lon) });
@@ -312,7 +331,8 @@ function findFeats(P) {
       const d = (P[i].x - f.x) ** 2 + (P[i].y - f.y) ** 2;
       if (!best || d < best.d) best = { d, s: P[i].s };
     }
-    if (best && best.d < 10 * 10) out.push({ kind: f.kind, s: best.s });
+    const r = f.kind === 'speedcam' || f.kind === 'redcam' ? 15 : 10;   // cameras stand a little further back than lights
+    if (best && best.d < r * r) out.push({ kind: f.kind, s: best.s });
   }
   out.sort((a, b) => a.s - b.s);
   return out.filter((f, i) => !out.slice(0, i).some(g => g.kind === f.kind && Math.abs(g.s - f.s) < 25));
@@ -691,6 +711,21 @@ function osmDrawFeats(g, gh, G, fade) {
   const list = [...(G.feats || [])].sort((a, b) => b.s - a.s);            // far to near
   const blink = Math.floor(performance.now() / 500) % 2 === 0;
   for (const f of list) {
+    if (f.kind === 'speedcam' || f.kind === 'redcam') {                   // a camera on a post at the left kerb
+      if (SET.cameras === false) continue;
+      const [X, z] = G.at(f.s, f.left - 1.2);
+      if (z < 0.9) continue;
+      const a = fade(z), [bx, by] = gh(X, z, 0), u = gh(X + 1, z, 0)[0] - bx;
+      if (u < 0.6) continue;
+      g.globalAlpha = a;
+      const [, ty] = gh(X, z, 3.2), bw = Math.max(3, u * 0.55), bh = Math.max(2, u * 0.4);
+      g.fillStyle = '#5b6672'; g.fillRect(bx - Math.max(1, u * 0.05), ty, Math.max(2, u * 0.1), by - ty);     // pole
+      g.fillStyle = '#161b22'; g.strokeStyle = '#6b7785'; g.lineWidth = Math.max(0.8, u * 0.03);
+      g.beginPath(); g.roundRect(bx - bw / 2, ty - bh, bw, bh, Math.max(1, u * 0.06)); g.fill(); g.stroke();  // camera box
+      g.fillStyle = f.kind === 'redcam' ? 'rgba(255,90,90,.9)' : '#e8eef5';
+      g.beginPath(); g.arc(bx, ty - bh / 2, Math.max(1, bh * 0.28), 0, Math.PI * 2); g.fill();              // lens
+      continue;
+    }
     if (f.kind !== 'lights' && f.kind !== 'zebra') continue;              // only these have posts at the kerb
     for (const o of [f.left - 0.9, f.right + 0.9]) {
       const [X, z] = G.at(f.s, o);
@@ -733,13 +768,20 @@ function osmOverlay() {
   const next = $('roadNext');
   if (!on) { sign.classList.add('hidden'); name.classList.add('hidden'); next?.classList.add('hidden'); if (typeof limitNudge === 'function') limitNudge(null); return; }
   if (next) {
+    const isCam = x => x.kind === 'speedcam' || x.kind === 'redcam';
     const ahead = [...(OSM.path.feats || []), ...(OSM.path.rbts || []).map(r => ({ kind: 'rbt', s: r.sIn }))]
-      .filter(x => x.s > OSM.sCar + 3 && x.s < OSM.sCar + 300).sort((a, b) => a.s - b.s);
-    const f = ahead[0];
+      .filter(x => x.s > OSM.sCar + 3 && x.s < OSM.sCar + 300 && !(isCam(x) && SET.cameras === false)).sort((a, b) => a.s - b.s);
+    // a camera wins over the lights or junction it sits at
+    const f = ahead.find(x => isCam(x) && ahead[0] && x.s - ahead[0].s < 40) || ahead[0];
     next.classList.toggle('hidden', !f);
+    const names = { lights: 'Lights', zebra: 'Zebra', rbt: 'Roundabout', mini: 'Mini roundabout', speedcam: 'Speed camera', redcam: 'Red-light camera' };
+    // spoken once per camera (only with spoken updates on)
+    for (const c of ahead.filter(isCam)) {
+      const p = pathAt(c.s), key = `${c.kind}:${Math.round(p.x / 25)}:${Math.round(p.y / 25)}`;
+      if (!OSM.said?.has(key)) { (OSM.said ||= new Set()).add(key); if (typeof say === 'function') say(`${names[c.kind]} ahead`); }
+    }
     if (f) {
       const m = f.s - OSM.sCar, d = SET.units === 'mph' ? `${Math.max(10, Math.round(m * 1.0936 / 10) * 10)} yd` : `${Math.max(10, Math.round(m / 10) * 10)} m`;
-      const names = { lights: 'Lights', zebra: 'Zebra', rbt: 'Roundabout', mini: 'Mini roundabout' };
       next.innerHTML = `<i class="rn-${f.kind === 'mini' ? 'rbt' : f.kind}"></i>${names[f.kind]} · ${d}`;
     }
   }

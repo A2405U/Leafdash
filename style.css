@@ -506,6 +506,9 @@ label.btn { cursor: pointer; }
 .road-next i { display: inline-block; width: 8px; height: 18px; border-radius: 3px; background: #161b22; border: 1px solid #6b7785;
   background-image: radial-gradient(circle at 50% 20%, #ff5a5a 2px, transparent 2.5px), radial-gradient(circle at 50% 50%, #ffb42e 2px, transparent 2.5px), radial-gradient(circle at 50% 80%, #46dc78 2px, transparent 2.5px); }
 .road-next i.rn-rbt { width: 13px; height: 13px; border-radius: 50%; background: none; border: 3px solid #e8eef5; }
+.road-next i.rn-speedcam, .road-next i.rn-redcam { width: 16px; height: 11px; border-radius: 3px; background: #161b22; border: 1px solid #6b7785;
+  background-image: radial-gradient(circle at 50% 50%, #e8eef5 2.5px, transparent 3px); }
+.road-next i.rn-redcam { background-image: radial-gradient(circle at 50% 50%, #ff5a5a 2.5px, transparent 3px); }
 .road-next i.rn-zebra { width: 16px; height: 10px; border: 0; border-radius: 2px; background: repeating-linear-gradient(90deg, #e8eef5 0 3px, #20252c 3px 5px); }
 
 /* phone held sideways (e.g. in a car mount): float the status buttons over the power strip

@@ -113,6 +113,8 @@ When it's turned on, the Drive screen draws the road you're actually on: its cur
 
 Traffic lights and zebra crossings come from the same map download. They're drawn at the kerb (lights unlit, since the map only says where they are, not their colour; zebras with flashing Belisha beacons) with a "Lights · 120 yd" note under the speed sign.
 
+**Cameras:** speed and red-light cameras mapped on OpenStreetMap show the same way ("Red-light camera · 150 yd"), taking priority over the lights or junction they sit at, with a small camera post drawn at the kerb. With spoken updates on, each one is announced once. They're read however they're mapped (`highway=speed_camera`, `speed_camera=traffic_signals`, `highway=red_light_camera`, `man_made=surveillance` + `surveillance=red_light`, or an enforcement relation's device). Only cameras someone has mapped will show, and the direction a camera faces isn't used yet. Turn them off under **Settings → Alerts and driving aids → Cameras**.
+
 **Remembered map areas:** every map download is kept on the phone for 30 days (the newest 250 areas, each 100–300 kB). Driving the same roads again, like a commute, loads them from the phone instead of the map servers, so the road shape still shows when the servers are busy or there's no signal. If both servers fail, the app tries again after 10 s, then 20 s, 40 s and at most a minute. The saved areas show which roads you've driven, stay on this phone only, and aren't part of a backup; **Forget saved map areas** in Settings → Drive screen clears them.
 
 ## Alerts and driving aids (Settings → Alerts and driving aids)
