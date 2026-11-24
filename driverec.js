@@ -21,7 +21,7 @@
    File format: JSON Lines (one JSON object per line). Each line has
    k (kind) and t (ms since the start). Kinds: head, d (car data changes),
    cells, elm (adapter command c and reply r, or err), bad (a reply that came
-   back broken), gps, osm (map data), osmerr (a failed map download), road,
+   back broken), link (adapter speed each minute: requests, average and slowest ms, cycle ms), gps, osm (map data), osmerr (a failed map download), road,
    app, mode, log, err, end.
    ===================================================================== */
 
@@ -123,6 +123,7 @@ function recTick() {
   if (!REC.on) return;
   if (S.mode === 'demo') REC.demo = true;
   recData(); recRoad(); recApp();
+  if (Date.now() - (REC.linkAt || REC.t0) > 60e3) { REC.linkAt = Date.now(); const st = S.elm?.takeStats?.(); if (st) recLine('link', { ...st, cycleMs: POLL.cycleMs }); }
   if (Date.now() - REC.t0 > REC_MAX_MS) recStop('time limit');
   recCard();
 }

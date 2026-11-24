@@ -65,7 +65,8 @@ async function ecuRead(ecu, did, timeout = 1500, fc = false) {
   try { text = await S.elm.send('22' + did, timeout); } catch { return null; }
   let b;
   try { b = parseReply(text); } catch { return null; }
-  if (b[0] !== 0x62 || ((b[1] << 8) | b[2]) !== parseInt(did, 16)) return null;   // 7F xx = not supported
+  if (b[0] === 0x7F) return null;                                                   // 7F 22 xx = not supported
+  if (b[0] !== 0x62 || ((b[1] << 8) | b[2]) !== parseInt(did, 16)) { S.elm?.markLost?.(); return null; }   // a reply to something else
   return b.slice(3);
 }
 
@@ -80,7 +81,7 @@ async function readCarDid(d) {
   const v = await ecuRead(d.ecu, d.did, 1500, !!d.fc);
   if (!v || v.length < d.len) {
     CD.miss[d.key] = (CD.miss[d.key] || 0) + 1;
-    if (CD.miss[d.key] === 3) { CD.skip[d.key] = true; log(`${d.key} (${d.ecu} 22 ${d.did}): no reply, skipping`); }
+    if (CD.miss[d.key] === 3 && !d.fast) { CD.skip[d.key] = true; log(`${d.key} (${d.ecu} 22 ${d.did}): no reply, skipping`); }   // speed, gear, power and brake are never given up on
     return;
   }
   CD.miss[d.key] = 0; CD.skip[d.key] = false;
