@@ -615,3 +615,8 @@ body.night::after { opacity: .45; }
 .lv-row { padding: 8px 0; border-top: 1px solid var(--line); }
 .lv-row b { font-weight: 600; font-size: 14px; }
 .lv-row .hint { margin: 4px 0 0; }
+/* slow-link badge (app.js) */
+.slow-link { display: flex; align-items: center; gap: 6px; border: 0; background: rgba(255,184,77,.12); color: var(--amber); font: 600 11px/1 system-ui; padding: 6px 9px; border-radius: 99px; }
+.slow-link i { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+.slow-link.hidden { display: none; }
+@media (max-width: 380px) { .slow-link span { display: none; } .slow-link { padding: 6px; } }

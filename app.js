@@ -149,16 +149,21 @@ class Elm {
   send(cmd, timeout = 4000) {
     if (!isReadOnly(cmd)) return Promise.reject(new Error(`Blocked (not read-only): ${cmd}`));
     const run = async () => {
+      if (this.lost) await this.resync();
       this.buf = '';
+      const t0 = performance.now();
       const reply = new Promise((resolve, reject) => {
         this.waiter = { resolve };
         setTimeout(() => {
-          if (this.waiter?.resolve === resolve) { this.waiter = null; reject(new Error(`Timeout: ${cmd}`)); }
+          if (this.waiter?.resolve === resolve) { this.waiter = null; this.lost = true; reject(new Error(`Timeout: ${cmd}`)); }
         }, timeout);
       });
       await this.write(cmd + '\r');
       let r;
       try { r = (await reply).trim(); } catch (e) { window.LeafDash?.emit('elm', { c: cmd, err: e.message }); throw e; }
+      const ms = performance.now() - t0, st = this.stats ||= { n: 0, ms: 0, max: 0 };
+      st.n++; st.ms += ms; st.max = Math.max(st.max, ms);
+      (this.recent ||= []).push(ms); if (this.recent.length > 30) this.recent.shift();   // for the slow-link badge
       window.LeafDash?.emit('elm', { c: cmd, r });   // for the drive recorder
       return r;
     };
@@ -166,6 +171,21 @@ class Elm {
     this.chain = p.catch(() => {});
     return p;
   }
+
+  /* After a timeout the adapter's late reply still arrives. Without care it would be taken as the answer to the
+     next request, and every reply after it would be one request out (seen on a real drive: 40 s of speed
+     answering with the gear's reply). So before the next request, wait up to 2 s for that late reply, then throw
+     it away. markLost() does the same when a reply doesn't match what was asked. */
+  markLost() { this.lost = true; }
+  async resync() {
+    this.waiter = null;
+    const until = performance.now() + 2000;
+    while (performance.now() < until && !this.buf.includes('>')) await new Promise(r => setTimeout(r, 40));
+    this.buf = ''; this.lost = false;
+    log('Adapter: back in step after a late reply');
+  }
+  /** Average and slowest request time since the last call (for the drive recorder and a slow-link note). */
+  takeStats() { const s = this.stats; this.stats = null; return s && s.n ? { n: s.n, avgMs: Math.round(s.ms / s.n), maxMs: Math.round(s.max) } : null; }
 
   async write(str) {
     const bytes = this.enc.encode(str);
@@ -327,7 +347,10 @@ async function query(group) {
   await useEcu('lbc', true);
   const text = await S.elm.send('21' + group, 5000);
   const bytes = parseReply(text);
-  if (bytes[0] !== 0x61) throw new Error(`Group ${group}: unexpected reply ${text.slice(0, 40)}`);
+  if (bytes[0] !== 0x61 || bytes[1] !== parseInt(group, 16)) {
+    S.elm.markLost();                                    // a reply to something else: get back in step first
+    throw new Error(`Group ${group}: unexpected reply ${text.slice(0, 40)}`);
+  }
   S.raw[group] = bytes;
   return bytes;
 }
@@ -361,17 +384,22 @@ function slowItems() {
 
 async function pollLoop() {
   let errors = 0;
-  POLL.last = {};
+  POLL.last = {}; POLL.slowNoted = false; POLL.cycles = 0;
   const elm = S.elm;                                     // a loop belongs to one connection, and ends with it
   while (S.mode === 'on' && S.elm === elm) {
     if (S.sniffing) { await sleep(300); continue; }
     const t0 = performance.now();
     try {
       // ---- fast lane ----
+      // Start on whichever computer we're already talking to, so a cycle needs one switch, not two (each switch is
+      // two set-up commands, which on a slow link is a fifth of the cycle).
+      const fastVcm = async () => { for (const d of CAR_DIDS) if (d.fast) await readCarDid(d); };
+      const vcmFirst = S.ecu === 'vcm';
+      if (vcmFirst) await fastVcm();
       Object.assign(S.data, decodeG1(await query('01')));
       S.lastUpdate = Date.now();
       render();
-      for (const d of CAR_DIDS) if (d.fast) await readCarDid(d);
+      if (!vcmFirst) await fastVcm();
       deriveCarData();
       render();
       LeafDash.emit('data', S.data);
@@ -385,11 +413,16 @@ async function pollLoop() {
       // gets a small head start, but no more. (Before 5.4b the current computer always went first: on a real
       // 1 s cycle the main computer's own reads filled every slot, and cells, temperatures, odometer, dash range
       // and tyres were never read.)
-      const late = it => (now - (POLL.last[it.id] || 0)) / (it.every * 1000) * (it.prio ? 3 : 1) * ((!it.ecu || it.ecu === S.ecu) ? 1.3 : 1);
+      // Cycles alternate which computer they end on, so a value on another computer can usually wait one cycle
+      // for its own and save a switch. Anything half as overdue again as it should be goes anyway: nothing starves.
+      const over = it => (now - (POLL.last[it.id] || 0)) / (it.every * 1000);
+      const here = it => !it.ecu || it.ecu === S.ecu;
+      const late = it => over(it) * (it.prio ? 3 : 1) * (here(it) ? 1.3 : 1);
       const budget = performance.now() + (carMoving() ? 250 : 500);    // parked: more time for the slow values
-      while (due.length && performance.now() <= budget) {
-        let bi = 0;
-        for (let i = 1; i < due.length; i++) if (late(due[i]) > late(due[bi])) bi = i;
+      while (performance.now() <= budget) {
+        let bi = -1;
+        for (let i = 0; i < due.length; i++) if ((here(due[i]) || over(due[i]) >= 1.5) && (bi < 0 || late(due[i]) > late(due[bi]))) bi = i;
+        if (bi < 0) break;
         const it = due.splice(bi, 1)[0];
         POLL.last[it.id] = Date.now();
         try { await it.run(); } catch (e) { if (!/Incomplete/.test(e.message)) log(`${it.id}: ${e.message}`); }
@@ -400,6 +433,10 @@ async function pollLoop() {
       if (++errors >= 6) { log('Too many errors. Is the car switched on?'); await sleep(3000); errors = 0; }
     }
     POLL.cycleMs = Math.round(performance.now() - t0);
+    // a note in the log (once a connection) when the adapter answers slowly: worth checking battery saver
+    if (!POLL.slowNoted && (POLL.cycles = (POLL.cycles || 0) + 1) % 60 === 0) {
+      const st = elm.stats; if (st && st.n > 50 && st.ms / st.n > 150) { POLL.slowNoted = true; log(`The adapter is answering slowly (about ${Math.round(st.ms / st.n)} ms a request, usually 70–100). Battery saver can do this.`); }
+    }
     await sleep(10);                                     // just yield to the UI
   }
 }
@@ -506,6 +543,23 @@ async function keepAwake() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && (S.mode === 'on' || S.mode === 'demo')) keepAwake();
+});
+
+/* ---------------- slow-link badge ----------------
+   A small amber "Slow link" in the header while the adapter is answering slowly: the middle of the last 30
+   request times over 150 ms (usual: 70–100), gone again below 120 ms. Tapping it explains in the alert line
+   (no pop-up, so it's fine while driving). */
+const LINK = { slow: false, ms: 0 };
+function linkTick() {
+  const r = S.mode === 'on' && S.elm?.recent?.length >= 15 ? S.elm.recent.slice().sort((a, b) => a - b) : null;
+  LINK.ms = r ? Math.round(r[r.length >> 1]) : 0;
+  const slow = !!r && (LINK.slow ? LINK.ms > 120 : LINK.ms > 150);
+  if (slow !== LINK.slow) { LINK.slow = slow; $('slowLink').classList.toggle('hidden', !slow); }
+}
+setInterval(linkTick, 3000);
+$('slowLink').addEventListener('click', () => {
+  const n = { text: `The adapter is answering slowly (about ${LINK.ms} ms a request, usually 70–100), so values update less often. Battery saver or Bluetooth audio can cause this.` };
+  alertNotice(n); setTimeout(() => { if (AL.notice === n) alertNotice(null); }, 9000);
 });
 
 /* ---------------- demo mode ---------------- */

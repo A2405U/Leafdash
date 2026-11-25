@@ -27,10 +27,15 @@ function htTripsSave(list) {
   if (window.LD_RESTORING) return;
   try { localStorage.setItem(HT_KEY, JSON.stringify(list.slice(-10))); } catch {}
 }
-const htDb = () => new Promise((res, rej) => {
+/* One shared connection to the app's database. It steps aside when another copy of Leaf Dash (another tab, or the
+   installed app) needs to upgrade it, and says so if an upgrade is held up by a copy that's still open. */
+let HTDB = null;
+const htDb = () => HTDB ||= new Promise((res, rej) => {
   const r = indexedDB.open('leafdash', 3);   // 2 added the drive recorder's store, 3 the remembered map areas
   r.onupgradeneeded = () => { for (const st of ['healthraw', 'driverec', 'osmcache']) if (!r.result.objectStoreNames.contains(st)) r.result.createObjectStore(st); };
-  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  r.onblocked = () => { if (typeof log === 'function') log('Storage upgrade is waiting: close any other Leaf Dash tabs or windows'); };
+  r.onsuccess = () => { const db = r.result; db.onversionchange = () => { db.close(); HTDB = null; }; db.onclose = () => { HTDB = null; }; res(db); };
+  r.onerror = () => { HTDB = null; rej(r.error); };
 });
 async function htRawPut(id, text) {
   try {

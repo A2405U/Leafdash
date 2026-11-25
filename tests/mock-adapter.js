@@ -4,7 +4,8 @@
    every command it was sent in window.__sent, so the tests can check the read-only rule.
    Knobs, set from a test with page.evaluate or addInitScript:
      window.__lat  delay per reply in ms (default 70, like a real adapter; 15 hides slow-link problems)
-     window.__spd  the speed the car reports, in tenths of km/h (default 0) */
+     window.__spd  the speed the car reports, in tenths of km/h (default 0)
+     window.__late { cmd, ms }: answer that command once, this late (to test getting back in step after a timeout) */
 function MOCK() {
   const enc = new TextEncoder(), dec = new TextDecoder();
   window.__sent = [];
@@ -45,7 +46,9 @@ function MOCK() {
     startNotifications: async () => {},
     writeValue: async v => {
       const c = dec.decode(v).replace(/[\r\n]+/g, '');                // every line ending, not just the first
-      setTimeout(() => listener?.({ target: { value: new DataView(enc.encode(answer(c) + '\r\r>').buffer) } }), window.__lat ?? 70);
+      let wait = window.__lat ?? 70;
+      if (window.__late && c.trim().toUpperCase() === window.__late.cmd) { wait = window.__late.ms; window.__late = null; }
+      setTimeout(() => listener?.({ target: { value: new DataView(enc.encode(answer(c) + '\r\r>').buffer) } }), wait);
     },
   };
   ch.writeValueWithoutResponse = ch.writeValue;
