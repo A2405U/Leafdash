@@ -553,7 +553,8 @@ const LINK = { slow: false, ms: 0 };
 function linkTick() {
   const r = S.mode === 'on' && S.elm?.recent?.length >= 15 ? S.elm.recent.slice().sort((a, b) => a - b) : null;
   LINK.ms = r ? Math.round(r[r.length >> 1]) : 0;
-  const slow = !!r && (LINK.slow ? LINK.ms > 120 : LINK.ms > 150);
+  let slow = !!r && (LINK.slow ? LINK.ms > 120 : LINK.ms > 150);
+  if (S.mode === 'demo' && typeof DP !== 'undefined' && DP.sim.slow) { slow = true; LINK.ms = 320; }   // test panel
   if (slow !== LINK.slow) { LINK.slow = slow; $('slowLink').classList.toggle('hidden', !slow); }
 }
 setInterval(linkTick, 3000);
@@ -570,6 +571,7 @@ function startDemo() {
   let t = 0, soc = 78.4, spd = 40;
   const base = Array.from({ length: 96 }, () => 3950 + Math.round(Math.random() * 18));
   demoTimer = setInterval(() => {
+    if (typeof DP !== 'undefined' && DP.dropUntil > Date.now()) return;   // test panel: adapter drop-out, nothing arrives
     t += 1;
     const burst = t % 26 > 19 ? 38 : 0;   // a hard-acceleration burst every ~26 s (shows the warp)
     const kw = 12 + 28 * Math.sin(t / 7) + 14 * Math.sin(t / 2.7) + burst + (Math.random() - .5) * 4;

@@ -4,7 +4,7 @@ Automated checks that run the app in a headless Chromium browser. They're for co
 app don't use this folder (it's excluded in `_config.yml`).
 
 ```bash
-node tests/run.js            # all of them, about 8 minutes
+node tests/run.js            # all of them, about 9 minutes
 node tests/run.js smoke      # just one, or several names
 ```
 
@@ -22,6 +22,7 @@ They need [Playwright](https://playwright.dev) with Chromium: `npm install playw
 | `recorder` | The drive recorder keeps every kind of line, never the VIN, and survives the app closing. |
 | `mapcache` | Remembered map areas and retries, with fake map servers that are busy, then back. |
 | `replay` | Records the demo route, then replays it: no map downloads, 8×, losing GPS, seeking, next junction, stopping. |
+| `demo` | The Demo test panel: jumping to each feature, 4×, losing GPS, slow link, drop-out, alerts, the driving lock, the note, the Car tab. |
 | `cameras` | Every common camera tagging is recognised; each demo-route camera shows ahead (over its lights); the switch hides them. |
 
 `mock-adapter.js` is a fake LELink² that answers like the car and records every command. Set `window.__lat` (ms per reply)

@@ -620,3 +620,4 @@ body.night::after { opacity: .45; }
 .slow-link i { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
 .slow-link.hidden { display: none; }
 @media (max-width: 380px) { .slow-link span { display: none; } .slow-link { padding: 6px; } }
+.demo-panel .dp-tabs { display: flex; margin: 6px 0 4px; } .demo-panel .dp-tabs button { flex: 1; padding: 7px 8px; }
