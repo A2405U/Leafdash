@@ -95,7 +95,7 @@ A sensor whose raw bytes are `FF FF` or `00 00` is treated as not fitted.
 
 ### Battery health (SOH)
 
-Because group 61 isn't decoded, health is estimated as capacity ÷ 115.44 Ah. That figure is the capacity of a new 40 kWh pack, and the result matches LeafSpy on this car (105.89 Ah → 91.73%). **Confirmed.**
+Because group 61 isn't decoded, health is estimated as capacity ÷ 115.44 Ah. That figure is the capacity of a new 40 kWh pack, and the result matches LeafSpy on this car. **Confirmed.**
 
 ## Main computer (`vcm`, request 797)
 
@@ -153,7 +153,7 @@ The rear window heater bit (`131B`, bit `20`) was seen dropping by itself when t
 | Side and tail lights | `0E07` | byte 1, bit `10` | | Confirmed by mode scan, 14 Nov 2026. Also set with dipped and main beam |
 | Fog lights | `0E07` | byte 1, bits `20` and `40` | | Confirmed as the two fog lights. On this car the front fogs come on first and the rear fog can only be added to them, so both bits set means the rear fog is on. Which bit is front and which is rear is still to check |
 | An indicator is lit | `0E07` | byte 1, bit `80`. Flashes on and off with the lamp | | Confirmed by mode scan. The same bit for the left indicator, the right indicator and the hazards |
-| Odometer | `0E01` | bytes 0–2 | **miles** on the UK car (`ODO_MILES` in `cardata.js`; stored in km) | Confirmed on a real drive: it went up 20 while GPS measured 32.0 km |
+| Odometer | `0E01` | bytes 0–2 | **miles** on the UK car (`ODO_MILES` in `cardata.js`; stored in km) | Confirmed on a real drive: it rose by the GPS distance in miles, not km |
 | Range shown on the dash | `0E24` | bytes 0–1 signed (a 13-byte reply in two pieces: needs flow control) | km | To check against the dash: read 168 at 74% charge (104 mi). Was ÷ 10 and never read in full before 5.5b |
 | Tyre pressure, front right | `0E25` | byte 0 × 1.7236894 (0 = sensor not awake yet, shown as unknown) | kPa | In use |
 | Tyre pressure, front left | `0E26` | byte 0 × 1.7236894 (0 = sensor not awake yet, shown as unknown) | kPa | In use |

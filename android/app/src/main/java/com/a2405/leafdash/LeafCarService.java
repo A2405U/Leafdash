@@ -9,14 +9,18 @@ import androidx.car.app.Session;
 import androidx.car.app.SessionInfo;
 import androidx.car.app.validation.HostValidator;
 
-/** What Android Auto starts when Leaf Dash Test is opened on the car screen. */
+/** What Android Auto starts when Leaf Dash is opened on the car screen. */
 public final class LeafCarService extends CarAppService {
 
     @NonNull
     @Override
     public HostValidator createHostValidator() {
-        // A private test build: accept whichever Android Auto (or desktop simulator) asks.
-        return HostValidator.ALLOW_ALL_HOSTS_VALIDATOR;
+        // Only Google's own car hosts (Android Auto, which the desktop simulator also goes through, and Android
+        // Automotive): another app on the phone pretending to be a car screen is refused. The list ships with the
+        // Car App Library.
+        return new HostValidator.Builder(getApplicationContext())
+                .addAllowedHosts(androidx.car.app.R.array.hosts_allowlist_sample)
+                .build();
     }
 
     @NonNull

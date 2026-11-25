@@ -120,6 +120,12 @@ async function osmcClear() {
 }
 async function osmcCount() { try { return (await osmcIndex()).length; } catch { return 0; } }
 
+const OSM_RADIUS = 700, OSM_GRID = 0.002, OSM_GRID_SLACK = 130;   // m; degrees; m (half the grid's diagonal, rounded up)
+/** The centre of the grid square a position is in (0.002° ≈ 220 m north–south, 140 m east–west in the UK). */
+function osmGridPoint(lat, lon) {
+  return { lat: (Math.floor(lat / OSM_GRID) + 0.5) * OSM_GRID, lon: (Math.floor(lon / OSM_GRID) + 0.5) * OSM_GRID };
+}
+
 async function osmFetch(lat, lon) {
   if (OSM.fixture || OSM.busy) return;
   if (OSM.fetchAt && metres(OSM.fetchAt, { lat, lon }) < 300 && OSM.ways.size) return;
@@ -130,7 +136,11 @@ async function osmFetch(lat, lon) {
     if (hit) { OSM.fetchAt = hit; OSM.status = ''; OSM.busy = false; return; }
   } catch {}
   if (Date.now() < OSM.nextTry) { OSM.busy = false; return; }
-  const at = `around:700,${lat.toFixed(5)},${lon.toFixed(5)}`;
+  // The servers get a point on a fixed grid (OSM_GRID), not the exact position: it says which block of about
+  // 220 × 140 m you're in, and nothing finer. The radius grows by the most that can move the centre, so the same
+  // roads are still covered.
+  const c = osmGridPoint(lat, lon);
+  const at = `around:${OSM_RADIUS + OSM_GRID_SLACK},${c.lat.toFixed(4)},${c.lon.toFixed(4)}`;
   // roads; lights, crossings, mini-roundabouts; speed and red-light cameras in the usual ways they're mapped
   const q = `[out:json][timeout:15];(way(${at})[highway~"${OSM_HW}"];node(${at})[highway~"^(traffic_signals|crossing|mini_roundabout|speed_camera|red_light_camera)$"];node(${at})[man_made=surveillance][surveillance~"red_light|traffic"];rel(${at})[type=enforcement];);out body geom qt;`;
   for (const url of OSM_SERVERS) {
@@ -140,7 +150,7 @@ async function osmFetch(lat, lon) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const json = await r.json();
       osmLoad(json);
-      osmcPut(lat, lon, json);                                  // remember it for next time
+      osmcPut(c.lat, c.lon, json);                              // remember it for next time (by the area it covers)
       OSM.fetchAt = { lat, lon }; OSM.nextTry = Date.now() + 10e3; OSM.status = ''; OSM.fails = 0;
       OSM.busy = false;
       return;

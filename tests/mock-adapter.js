@@ -27,7 +27,7 @@ function MOCK() {
       const cur = (-20 - (t % 7)) * 1024; [b[2], b[3], b[4], b[5]] = [(cur >>> 24) & 255, (cur >>> 16) & 255, (cur >>> 8) & 255, cur & 255];
       b[20] = 0x8C; b[21] = 0xA0;                                                                // 360.0 V
       const soc = 650000 - t * 10; [b[33], b[34], b[35]] = [(soc >> 16) & 255, (soc >> 8) & 255, soc & 255];
-      const ah = 1058900; [b[37], b[38], b[39]] = [(ah >> 16) & 255, (ah >> 8) & 255, ah & 255];
+      const ah = 1000000; [b[37], b[38], b[39]] = [(ah >> 16) & 255, (ah >> 8) & 255, ah & 255];   // 100.00 Ah, made up
       return multi(b);
     }
     if (c === '2102') { const b = [0x61, 0x02]; for (let i = 0; i < 96; i++) { const mv = 3950 + (i % 7); b.push(mv >> 8, mv & 255); } return multi(b.concat([0, 0, 0, 0])); }
@@ -36,7 +36,7 @@ function MOCK() {
     if (c === '221156') return '62115604';                                                       // gear D
     if (c === '22121A') return '62121A' + (window.__spd || 0).toString(16).padStart(4, '0').toUpperCase();
     if (/^220E2[5-8]$/.test(c)) return '62' + c.slice(2) + '82';                                   // tyres about 225 kPa
-    if (c === '220E01') return '620E01006AFD';                                                    // odometer (3 bytes)
+    if (c === '220E01') return '620E01003039';                                                    // odometer (3 bytes): 12345, a made-up figure
     if (c.startsWith('22')) return '62' + c.slice(2) + '0010';
     return '?';
   };

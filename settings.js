@@ -228,7 +228,7 @@ function openSettings(section) {
     e.target.checked = false;
     const ok = await confirmSheet({
       title: 'Use OpenStreetMap road data?',
-      body: '<p>To download the roads around you, Leaf Dash sends your <b>approximate location</b> (to about a metre) to the public Overpass API servers that serve OpenStreetMap data, roughly every 300 m you travel.</p><p class="hint">No car data is sent. Map data © OpenStreetMap contributors.</p>',
+      body: '<p>To download the roads around you, Leaf Dash sends your <b>rough location</b> (which block of about 220 × 140 m you\'re in, not the exact spot) to the public Overpass API servers that serve OpenStreetMap data, roughly every 300 m you travel.</p><p class="hint">No car data is sent. Map data © OpenStreetMap contributors.</p>',
       ok: 'Turn on', requireTick: 'I understand my location is sent to download map data',
     });
     if (ok) { SET.realRoad = true; e.target.checked = true; saveSettings(); }

@@ -26,7 +26,7 @@ const CURRENT_SIGN = -1;     // ZE1 reports discharge as negative; flipped so dr
 /* SOH: group 0x61 on 2018+ cars. Offset unconfirmed: the raw reply is shown
    in Debug so it can be calibrated. Until then SOH is estimated from Ah. */
 const G61_SOH = null;        // e.g. { at: 9, len: 2, scale: 1 / 100 } once confirmed
-const NEW_AH = 115.44;       // new 40 kWh pack Ah: matches LeafSpy (105.89 Ah → 91.73%)
+const NEW_AH = 115.44;       // new 40 kWh pack Ah: matches LeafSpy
 
 /* VCM (vehicle control module): request 0x797, reply 0x79A. On 2018+ cars
    the gateway only passes request/reply traffic to the OBD port, so gear and
