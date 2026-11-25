@@ -1,4 +1,4 @@
-package app.leafdash.car;
+package com.a2405.leafdash;
 
 import android.app.Presentation;
 import android.hardware.display.DisplayManager;
@@ -43,7 +43,7 @@ final class SurfaceRenderer implements SurfaceCallback {
                     "LeafDashCar", container.getWidth(), container.getHeight(), container.getDpi(),
                     surface, DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
             presentation = new Presentation(carContext, display.getDisplay());
-            web = WebHost.create(presentation.getContext(), "?demo", true);
+            web = WebHost.create(presentation.getContext(), "?demo", true, null);
             presentation.setContentView(web);
             presentation.show();
         } catch (RuntimeException e) {

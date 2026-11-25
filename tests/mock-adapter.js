@@ -54,6 +54,6 @@ function MOCK() {
   ch.writeValueWithoutResponse = ch.writeValue;
   const svc = { uuid: '0000ffe0-0000-1000-8000-00805f9b34fb', getCharacteristics: async () => [ch] };
   const dev = { name: 'OBDBLE', id: 'test', addEventListener() {}, removeEventListener() {}, gatt: { connect: async () => ({ getPrimaryService: async () => svc }), disconnect() {} } };
-  Object.defineProperty(navigator, 'bluetooth', { value: { requestDevice: async () => dev, getDevices: async () => [] } });
+  Object.defineProperty(navigator, 'bluetooth', { configurable: true, value: { requestDevice: async () => dev, getDevices: async () => [] } });
 }
 module.exports = { MOCK };

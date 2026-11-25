@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- maps and the optional add-ons (Home Assistant, MQTT, ABRP), the same as the website -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- the OBD adapter: finding it, and talking to it. Never used to work out where the phone is. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- the road drawing on the Drive screen follows the phone's GPS -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Android Auto: a navigation-type app may draw its own picture on the car screen -->
     <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
     <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
+
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 
     <application
         android:allowBackup="false"
@@ -21,10 +34,11 @@
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1" />
 
-        <!-- the phone screen: the same Leaf Dash, in demo mode -->
+        <!-- the phone screen: the full Leaf Dash -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|density|uiMode"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,7 +46,7 @@
             </intent-filter>
         </activity>
 
-        <!-- the car screen -->
+        <!-- the car screen (still Demo mode only) -->
         <service
             android:name=".LeafCarService"
             android:exported="true">
@@ -41,5 +55,16 @@
                 <category android:name="androidx.car.app.category.NAVIGATION" />
             </intent-filter>
         </service>
+
+        <!-- hands files to the share sheet -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

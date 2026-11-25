@@ -2,16 +2,19 @@ plugins {
     id 'com.android.application'
 }
 
+// The app's version is the web app's (LeafDash.version in metrics.js), so both always match.
+def webVersion = (file('../../metrics.js').text =~ /version:\s*'([^']+)'/)[0][1]
+
 android {
-    namespace 'app.leafdash.car'
-    compileSdk 34
+    namespace 'com.a2405.leafdash'
+    compileSdk 36
 
     defaultConfig {
-        applicationId 'app.leafdash.car'
-        minSdk 26
-        targetSdk 34
-        versionCode 1
-        versionName '0.1-test'
+        applicationId 'com.a2405.leafdash'   // permanent once uploaded to Google Play
+        minSdk 31                            // Android 12: the Bluetooth permissions this app uses
+        targetSdk 36                         // what Google Play asks for
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)   // goes up with every GitHub build
+        versionName webVersion
     }
 
     // One fixed test key, kept in the repo, so each new build installs over the last one.
@@ -37,10 +40,11 @@ android {
 }
 
 // Copy the Leaf Dash web app (the files in the repo root) into the package, so the
-// test app shows exactly the same screens as the website, with no network needed.
+// app shows exactly the same screens as the website, with no network needed to start.
 tasks.register('copyWeb', Copy) {
     from(rootProject.projectDir.parentFile) {
         include '*.html', '*.js', '*.css', '*.webp', '*.webmanifest', 'icons/**', 'vendor/**'
+        exclude 'sw.js'   // the app has its files built in, so it needs no offline cache
     }
     into "${buildDir}/webassets/www"
 }
@@ -49,5 +53,6 @@ preBuild.dependsOn 'copyWeb'
 dependencies {
     implementation platform('org.jetbrains.kotlin:kotlin-bom:1.9.24')   // keeps the libraries' Kotlin parts on one version
     implementation 'androidx.car.app:app:1.4.0'
-    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'androidx.core:core:1.16.0'
 }

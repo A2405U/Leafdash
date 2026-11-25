@@ -8,6 +8,8 @@ Maps data from Openstreetmap - openstreetmap.org
 
 A clean, customisable dashboard for the Nissan Leaf (built and calibrated on a 2021 ZE1 40 kWh). It runs in Chrome on Android and talks to a Bluetooth LE OBD adapter (LELink²) using Web Bluetooth. You install it from the browser, and it works offline once loaded.
 
+An Android app version is in testing (see [`android/README.md`](android/README.md)). It's the same app with the files built in, using the phone's own Bluetooth.
+
 ## Before you use it
 
 - **Use at your own risk.** Leaf Dash is a hobby project, provided without any warranty (see the licence).
