@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -239,10 +240,14 @@ final class NativeBridge implements BleLink.Listener {
         try {
             File dir = new File(activity.getCacheDir(), "shared");
             if (!dir.exists() && !dir.mkdirs()) throw new IOException("no folder");
-            File f = new File(dir, safeName(name));
+            // The name comes from the page: keep it a plain file name inside the share folder, nothing else.
+            Path base = dir.toPath().toAbsolutePath().normalize();
+            Path target = base.resolve(safeName(name)).normalize();
+            if (!target.startsWith(base) || target.equals(base)) throw new IOException("bad name");
+            File f = target.toFile();
             try (FileOutputStream out = new FileOutputStream(f)) { out.write(Base64.decode(base64, Base64.DEFAULT)); }
             Uri uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".files", f);
-            Intent send = new Intent(Intent.ACTION_SEND).setType(mime).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Intent send = new Intent(Intent.ACTION_SEND).setType(safeMime(mime)).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             ui.post(() -> activity.startActivity(Intent.createChooser(send, name)));
             answer(id, true, "");
         } catch (IOException | IllegalArgumentException e) {
@@ -256,7 +261,7 @@ final class NativeBridge implements BleLink.Listener {
         try {
             ContentValues v = new ContentValues();
             v.put(MediaStore.Downloads.DISPLAY_NAME, safeName(name));
-            v.put(MediaStore.Downloads.MIME_TYPE, mime);
+            v.put(MediaStore.Downloads.MIME_TYPE, safeMime(mime));
             Uri uri = activity.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
             if (uri == null) throw new IOException("no file");
             try (OutputStream out = activity.getContentResolver().openOutputStream(uri)) {
@@ -270,8 +275,19 @@ final class NativeBridge implements BleLink.Listener {
         }
     }
 
+    /** A plain file name: letters, digits, dot, dash and underscore only, never starting with a dot. */
     private static String safeName(String name) {
-        String n = name == null ? "leafdash" : name.replaceAll("[^A-Za-z0-9._-]", "_");
+        String n = name == null ? "" : name.replaceAll("[^A-Za-z0-9._-]", "_").replaceAll("^\\.+", "");
+        if (n.length() > 120) n = n.substring(n.length() - 120);
         return n.isEmpty() ? "leafdash" : n;
+    }
+
+    /** Only the kinds of file Leaf Dash makes. */
+    private static String safeMime(String mime) {
+        switch (mime == null ? "" : mime) {
+            case "application/json": case "application/gzip": case "application/x-ndjson":
+            case "text/plain": case "text/csv": case "text/html": return mime;
+            default: return "application/octet-stream";
+        }
     }
 }
