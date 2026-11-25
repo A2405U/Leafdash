@@ -153,5 +153,5 @@ function drawChargeSceneImg(g, W, H, d, t) {
 
   const [bx, by] = at(SIDE.pack[0], SIDE.pack[1]), [bx2, by2] = at(SIDE.pack[2], SIDE.pack[3]);
   drawPack(g, bx, by, bx2 - bx, by2 - by, d, t);
-  drawFlow(g, SIDE.flow.map(p => at(...p)), yG, t, { kind: d.chargeMode });
+  drawFlow(g, SIDE.flow.map(p => at(...p)), yG, t, { kind: d.chargeMode, kw: chargeKw(d) });
 }
