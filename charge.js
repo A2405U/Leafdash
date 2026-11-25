@@ -92,8 +92,8 @@ function drawChargeScene(g, W, H, d, t) {
   bg.addColorStop(0, '#111a24'); bg.addColorStop(1, '#05070a');
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
 
-  const scale = Math.min(W * 0.86 / CAR_LEN, H * 0.42 / 1.6);
-  const x0 = (W - CAR_LEN * scale) / 2, yG = H * 0.52;
+  const scale = Math.min(W * 0.78 / CAR_LEN, H * 0.42 / 1.6);
+  const cw = CAR_LEN * scale, x0 = (W - cw) / 2 >= W * 0.12 ? (W - cw) / 2 : W - cw - W * 0.05, yG = H * 0.52;   // room in front for the cable
   const X = z => x0 + (CAR_LEN - z) * scale;          // front of the car on the left, rear on the right
   const Y = y => yG - y * scale;
 
@@ -107,6 +107,8 @@ function drawChargeScene(g, W, H, d, t) {
   const col = hexRgb(SET.carColour || '#e6e8eb');
   // side profile in metres: x from the front bumper (0) to the rear (4.4), y up from the ground
   const P = x => X(CAR_LEN - x);
+  const ck = Math.max(0.7, Math.min(1.8, scale / 65));
+  drawCable(g, P(0.16), Y(0.765), P(0), yG, ck, d.chargeMode);        // behind the car
   const mv = (p, x, y) => p.moveTo(P(x), Y(y)), ln = (p, x, y) => p.lineTo(P(x), Y(y));
   const bz = (p, a, b, c, d, e, f) => p.bezierCurveTo(P(a), Y(b), P(c), Y(d), P(e), Y(f));
   const WF = 0.93, WR = 3.63, AR = 0.42, TR = 0.33;     // wheel centres, arch and tyre radius
@@ -234,12 +236,14 @@ function drawChargeScene(g, W, H, d, t) {
   g.beginPath(); mv(g, 2.2, 1.50); bz(g, 2.6, 1.545, 3.4, 1.545, 3.82, 1.49); g.stroke();
 
   // energy flowing from the charge port (in the nose) to the pack
-  drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t);
+  drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t, { kind: d.chargeMode });
 }
 
 function drawPack(g, bx, by, bw, bh, d, t) {
   const soc = Math.max(0, Math.min(100, d.soc ?? 0));
-  const fillCol = soc < 15 ? '#ff5d6c' : soc < 30 ? '#ffb84d' : '#3ddc97';
+  // colour shows the charger (like Samsung's): dark green 3-pin, green wallbox/BYOC, blue rapid;
+  // yellow below 25% whatever the charger, red below 15%
+  const fillCol = soc < 15 ? '#ff5d6c' : soc < 25 ? '#ffd24d' : ({ 1: '#1f9e64', 3: '#4cc3ff' }[d.chargeMode] || '#3ddc97');
   g.save();
   g.shadowColor = fillCol; g.shadowBlur = 18;
   g.fillStyle = 'rgba(10,20,18,.9)';
@@ -264,8 +268,9 @@ function drawPack(g, bx, by, bw, bh, d, t) {
   g.beginPath(); g.roundRect(bx, by, bw, bh, 4); g.stroke();
 
 }
-/** Energy path from the charge port to the pack: a smooth curve through pts (screen px). */
-function drawFlow(g, pts, yG, t) {
+/** Energy path from the charge port to the pack: a smooth curve through pts (screen px).
+ *  o.noseX: screen x of the front of the car; o.k: size scale; o.kind: chargeMode (1 3-pin, 2 wallbox, 3 rapid). */
+function drawFlow(g, pts, yG, t, o = {}) {
   // Catmull-Rom through the points, sampled into a polyline
   const P = [pts[0], ...pts, pts[pts.length - 1]], line = [];
   for (let i = 1; i < P.length - 2; i++) for (let k = 0; k < 16; k++) {
@@ -284,14 +289,37 @@ function drawFlow(g, pts, yG, t) {
   g.shadowBlur = 0;
   g.strokeStyle = 'rgba(76,195,255,.35)'; g.lineWidth = 2; g.setLineDash([3, 5]);
   g.beginPath(); line.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.setLineDash([]);
-  for (let k = 0; k < 5; k++) {
-    const u = ((t / 1800) + k / 5) % 1, [qx, qy] = at(u * total);
+  const period = { 1: 2600, 2: 1400, 3: 650 }[o.kind] || 1800, dots = o.kind === 3 ? 7 : 5;   // faster charging, faster flow
+  for (let k = 0; k < dots; k++) {
+    const u = ((t / period) + k / dots) % 1, [qx, qy] = at(u * total);
     g.fillStyle = `rgba(150,220,255,${0.9 - u * 0.5})`;
     g.beginPath(); g.arc(qx, qy, 2.6, 0, Math.PI * 2); g.fill();
   }
-  // cable out of the nose
-  g.strokeStyle = 'rgba(200,210,220,.5)'; g.lineWidth = 3;
-  g.beginPath(); g.moveTo(portX, portY); g.bezierCurveTo(portX - 40, portY + 10, portX - 50, yG - 10, portX - 70, yG + 20); g.stroke();
+}
+
+
+/* The charging cable: out of the port in one smooth curve, easing down past the front of the car to lie flat on the
+   ground, then off the left edge, as if to a charger out of view. It's drawn before the car: the port is in the middle
+   of the nose, so from the side its end is hidden behind the bodywork. Its thickness and colour show the charger in use:
+   a thin grey 3-pin lead, a thicker dark Type 2 wallbox cable, or a heavy black CHAdeMO rapid cable. */
+const CABLES = {
+  1: { w: 2.6, col: '#8d98a5', edge: '#c3ccd6' },   // 3-pin
+  2: { w: 4.6, col: '#262d36', edge: '#5b6672' },   // wallbox / BYOC (Type 2)
+  3: { w: 7.5, col: '#121519', edge: '#3d4653' },   // rapid (CHAdeMO)
+};
+function drawCable(g, px, py, noseX, yG, k, kind) {
+  const c = CABLES[kind] || CABLES[2];
+  const gx = Math.max(Math.min(noseX, px) * 0.2, Math.min(noseX, px) - 84 * k), gy = yG + 2;   // where it touches the ground
+  const span = px - gx;
+  const path = () => {
+    g.beginPath(); g.moveTo(px, py);
+    g.bezierCurveTo(px - span * 0.7, py, gx + span * 0.35, gy, gx, gy);   // level out of the port for a while (clear of the bumper), level onto the ground
+    g.lineTo(-40, gy);                                                     // along the ground, off screen
+  };
+  g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.strokeStyle = c.edge; g.lineWidth = (c.w + 1.6) * k; path(); g.stroke();   // a thin rim so a dark cable shows on a dark floor
+  g.strokeStyle = c.col; g.lineWidth = c.w * k; path(); g.stroke();
+  g.restore();
 }
 
 /* ---------------- info overlay ---------------- */
