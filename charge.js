@@ -295,30 +295,26 @@ function drawFlow(g, pts, yG, t, o = {}) {
   drawCable(g, portX, portY, o.noseX ?? portX - 20, yG, o.k || 1, o.kind);
 }
 
-/* The charging cable: out of the port, forwards past the front of the car, down to the ground and off the left edge,
-   as if to a charger out of view. It looks like the charger in use: a thin grey 3-pin lead, a thicker dark Type 2
-   wallbox cable, or a heavy black CHAdeMO rapid cable with a big plug. */
+/* The charging cable: out of the port in one smooth curve, easing down past the front of the car to lie flat on the
+   ground, then off the left edge, as if to a charger out of view. Its thickness and colour show the charger in use:
+   a thin grey 3-pin lead, a thicker dark Type 2 wallbox cable, or a heavy black CHAdeMO rapid cable. */
 const CABLES = {
-  1: { w: 2.6, col: '#8d98a5', edge: '#c3ccd6', plug: [12, 7] },                 // 3-pin
-  2: { w: 4.6, col: '#262d36', edge: '#5b6672', plug: [17, 10] },                // wallbox / BYOC (Type 2)
-  3: { w: 7.5, col: '#121519', edge: '#3d4653', plug: [26, 15], led: '#ffb84d' }, // rapid (CHAdeMO)
+  1: { w: 2.6, col: '#8d98a5', edge: '#c3ccd6' },   // 3-pin
+  2: { w: 4.6, col: '#262d36', edge: '#5b6672' },   // wallbox / BYOC (Type 2)
+  3: { w: 7.5, col: '#121519', edge: '#3d4653' },   // rapid (CHAdeMO)
 };
 function drawCable(g, px, py, noseX, yG, k, kind) {
-  const c = CABLES[kind] || CABLES[2], ex = Math.min(noseX, px) - 18 * k;
+  const c = CABLES[kind] || CABLES[2];
+  const gx = Math.max(Math.min(noseX, px) * 0.25, Math.min(noseX, px) - 70 * k), gy = yG + 2;   // where it touches the ground
+  const span = px - gx;
   const path = () => {
     g.beginPath(); g.moveTo(px, py);
-    g.bezierCurveTo(px - 10 * k, py, ex + 8 * k, py + 2 * k, ex, py + 8 * k);                    // out of the nose
-    g.bezierCurveTo(ex - 10 * k, py + 26 * k, ex - 18 * k, yG - 2, ex - 48 * k, yG + 2);         // droop to the ground
-    g.bezierCurveTo(ex - 90 * k, yG + 4, ex - 140 * k, yG + 1, -40, yG + 3);                     // along the ground, off screen
+    g.bezierCurveTo(px - span * 0.45, py, gx + span * 0.4, gy, gx, gy);   // level out of the port, level onto the ground: no corners
+    g.lineTo(-40, gy);                                                     // along the ground, off screen
   };
   g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-  g.strokeStyle = c.edge; g.lineWidth = (c.w + 1.6) * k; path(); g.stroke();                     // a thin rim so a dark cable shows on a dark floor
+  g.strokeStyle = c.edge; g.lineWidth = (c.w + 1.6) * k; path(); g.stroke();   // a thin rim so a dark cable shows on a dark floor
   g.strokeStyle = c.col; g.lineWidth = c.w * k; path(); g.stroke();
-  // the plug, in the port, its handle pointing out of the car
-  const [pl, ph] = c.plug.map(v => v * k);
-  g.fillStyle = c.col; g.strokeStyle = c.edge; g.lineWidth = 1.2;
-  g.beginPath(); g.roundRect(px - pl, py - ph / 2, pl, ph, Math.min(4 * k, ph / 2)); g.fill(); g.stroke();
-  if (c.led) { g.fillStyle = c.led; g.shadowColor = c.led; g.shadowBlur = 6; g.beginPath(); g.arc(px - pl * 0.55, py - ph * 0.15, 1.6 * k, 0, Math.PI * 2); g.fill(); }
   g.restore();
 }
 
