@@ -22,4 +22,10 @@ async function connect(page) {
   await page.evaluate(() => document.querySelectorAll('.modal-wrap').forEach(w => w.remove()));
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-module.exports = { open, connect, sleep };
+/** Wait until fn (run in the page) returns something truthy, checking every 250 ms, for at most ms. Returns its last value. */
+async function until(page, fn, ms = 8000, arg) {
+  const end = Date.now() + ms; let v;
+  while (Date.now() < end) { v = await page.evaluate(fn, arg); if (v) return v; await sleep(250); }
+  return v;
+}
+module.exports = { open, connect, sleep, until };

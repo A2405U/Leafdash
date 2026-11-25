@@ -289,7 +289,7 @@ function drawFlow(g, pts, yG, t, o = {}) {
   g.shadowBlur = 0;
   g.strokeStyle = 'rgba(76,195,255,.35)'; g.lineWidth = 2; g.setLineDash([3, 5]);
   g.beginPath(); line.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.setLineDash([]);
-  const period = { 1: 2600, 2: 1400, 3: 650 }[o.kind] || 1800, dots = o.kind === 3 ? 7 : 5;   // faster charging, faster flow
+  const period = { 1: 3900, 2: 2100, 3: 975 }[o.kind] || 2700, dots = o.kind === 3 ? 7 : 5;   // faster charging, faster flow (all at two thirds of their first speed)
   for (let k = 0; k < dots; k++) {
     const u = ((t / period) + k / dots) % 1, [qx, qy] = at(u * total);
     g.fillStyle = `rgba(150,220,255,${0.9 - u * 0.5})`;
@@ -303,9 +303,9 @@ function drawFlow(g, pts, yG, t, o = {}) {
    of the nose, so from the side its end is hidden behind the bodywork. Its thickness and colour show the charger in use:
    a thin grey 3-pin lead, a thicker dark Type 2 wallbox cable, or a heavy black CHAdeMO rapid cable. */
 const CABLES = {
-  1: { w: 2.6, col: '#8d98a5', edge: '#c3ccd6' },   // 3-pin
-  2: { w: 4.6, col: '#262d36', edge: '#5b6672' },   // wallbox / BYOC (Type 2)
-  3: { w: 7.5, col: '#121519', edge: '#3d4653' },   // rapid (CHAdeMO)
+  1: { w: 1.9, col: '#8d98a5', edge: '#c3ccd6' },   // 3-pin: thin and light
+  2: { w: 3.45, col: '#4a5563', edge: '#8793a0' },   // wallbox / BYOC (Type 2): mid grey, clear against the floor
+  3: { w: 6.0, col: '#363e49', edge: '#6e7a88' },   // rapid (CHAdeMO): heavy charcoal, lighter than the background
 };
 function drawCable(g, px, py, noseX, yG, k, kind) {
   const c = CABLES[kind] || CABLES[2];
