@@ -85,7 +85,7 @@ function leavesHtml() {
   const row = (title, state, text) => `<div class="lv-row"><div class="row-between"><b>${title}</b><span class="pill ${state === 'On' ? 'eco' : ''}">${state}</span></div><p class="hint">${text}</p></div>`;
   return `<div class="set-group"><div class="label">What leaves this phone</div>
     ${row('Leaf Dash itself', 'Always', 'The app is loaded and updated from GitHub Pages (github.io). Like any website, GitHub sees your internet address.')}
-    ${row('Map data for the road shape', SET.realRoad ? 'On' : 'Off', 'Your position goes to two OpenStreetMap map servers (overpass-api.de, overpass.kumi.systems), asking for the roads within 700 m. Areas you\'ve driven are kept on this phone, so the same roads aren\'t asked for again. Settings → Drive screen.')}
+    ${row('Map data for the road shape', SET.realRoad ? 'On' : 'Off', 'Your rough position (which block of about 220 × 140 m you\'re in, never the exact spot) goes to two OpenStreetMap map servers (overpass-api.de, overpass.kumi.systems), asking for the roads around it. Areas you\'ve driven are kept on this phone, so the same roads aren\'t asked for again. Settings → Drive screen.')}
     ${row('Home Assistant', ao('homeassistant') ? 'On' : 'Off', 'The car data listed when you turned it on, to your own Home Assistant. Location only if you allowed it. Settings → Add-ons.')}
     ${row('MQTT', ao('mqtt') ? 'On' : 'Off', 'The car data listed when you turned it on, to your own MQTT broker. Location only if you allowed it. Settings → Add-ons.')}
     ${row('A Better Route Planner', ao('abrp') ? 'On' : 'Off', 'Charge, power, speed and (if allowed) location, to ABRP (api.iternio.com). Settings → Add-ons.')}

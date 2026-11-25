@@ -16,17 +16,18 @@ You'll get a reply as soon as possible. This is a hobby project run by one perso
 
 Most important first:
 
-- **Anything that gets a command past the read-only guard** (`isReadOnly()` in `app.js`), or any way to make Leaf Dash write to, reset or change the car. The app must only ever read.
+- **Anything that gets a command past the read-only guard** (`isReadOnly()` in `app.js`, and in the Android app also `ReadOnlyGuard.java`), or any way to make Leaf Dash write to, reset or change the car. The app must only ever read.
 - **Data leaving the phone when it shouldn't.** For example: an add-on sending without being turned on, sending in Demo mode, sending location when its location setting is off, or logins ending up in a backup file when that box wasn't ticked.
 - **Running code that isn't the app's own**, for example through a backup file, map data, a mode-scan file or an add-on reply.
 - **Anything that exposes personal details** such as a VIN, location history or add-on logins.
 
 ## Not in scope
 
-- The Android Auto test app in `android/`. It's a demo-only proof of concept, signed with a public throwaway key, and isn't meant for real use.
+- The Android app's **car screen** (Android Auto). It's still Demo only.
+- Test builds of the Android app being signed with the public test key in `android/`. That key only exists so test builds install over each other; it's not a secret.
 - Problems with the OBD adapter, the car itself, or the services the add-ons connect to (Home Assistant, MQTT brokers, A Better Route Planner).
-- Someone with your unlocked phone being able to see your data. Everything is stored in your browser on that phone.
+- Someone with your unlocked phone being able to see your data. Everything is stored in your browser on that phone (or in the Android app's own storage).
 
 ## Supported versions
 
-Only the latest version, the one published on GitHub Pages from `main`, gets fixes.
+Only the latest version gets fixes: the website published on GitHub Pages from `main`, and the newest Android build.

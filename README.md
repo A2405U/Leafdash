@@ -36,7 +36,7 @@ Everything Leaf Dash knows stays in the browser on your phone, except these, eac
 | What | Sent to | When |
 |---|---|---|
 | The app itself | GitHub Pages (github.io), which sees your internet address like any website | Loading and updating the app |
-| Your position, asking for the roads within 700 m | Two OpenStreetMap map servers: overpass-api.de and overpass.kumi.systems | Only with real road shape on (Settings → Drive screen). Areas you've driven are kept on the phone and not asked for again |
+| Your rough position (which block of about 220 × 140 m you're in), asking for the roads around it | Two OpenStreetMap map servers: overpass-api.de and overpass.kumi.systems | Only with real road shape on (Settings → Drive screen). Areas you've driven are kept on the phone and not asked for again |
 | The car data you chose, and location only if allowed | Your own Home Assistant or MQTT broker, or ABRP (api.iternio.com) | Only for an add-on you've turned on, after a confirmation. Never in Demo mode |
 | Recordings, reports, scans, backups | Wherever you send them | Only when you tap Share or Save |
 
@@ -113,7 +113,7 @@ When it's turned on, the Drive screen draws the road you're actually on: its cur
 - **Lanes:** from OSM's `lanes`, `lanes:forward` and `lanes:backward` tags, laid out for driving on the left. Your car sits next to the centre line on two-way roads, and in the left or middle lane on one-way roads. Roads with no lane count fall back to one lane each way.
 - **Speed limit:** from `maxspeed`, including the UK national limits.
 - **Fallback:** with no GPS or no map data, it goes back to the straight road.
-- **Privacy:** your approximate location goes to the Overpass servers (you're asked first). No car data is sent.
+- **Privacy:** your rough location goes to the Overpass servers (you're asked first). It's snapped to a fixed grid first, so they only learn which block of about 220 × 140 m you're in. No car data is sent.
 - **Credit:** map data © OpenStreetMap contributors, shown on screen.
 - **Simulated drive:** add `?roadtest` to the address to try it with a made-up road network.
 - **Roundabouts:** the ring is drawn with its island and exits, a give-way line where you join, and a "Roundabout · 120 yd" note. Mini-roundabouts show as a painted disc. The map doesn't know which exit you'll take, so the whole ring is shown until you leave it.
