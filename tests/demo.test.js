@@ -53,6 +53,12 @@ module.exports = async ({ browser, base, assert, note }) => {
   // charging screen: each charger type draws its own cable (3-pin, wallbox, rapid) without errors
   for (const n of [1, 2, 3]) { await page.evaluate(n => { DP.manual = true; DP.charging = true; S.demoCharging = true; DP.chargeType = n; showView('drive'); }, n); await sleep(1500); }
   assert.ok(await page.evaluate(() => CH.active), 'the charging screen did not show');
+  // custom charging power: a rapid charger at 18 kW
+  await page.evaluate(() => { DP.open = true; DP.tab = 'car'; dpRender(); });
+  await page.click('[data-a=ckw]'); await page.evaluate(() => { const r = document.querySelector('[data-ckw]'); r.value = 18; r.dispatchEvent(new Event('input')); });
+  const ck = await until(page, () => Math.abs(chargeKw(S.data) - 18) < 0.5 && chargeKw(S.data));
+  assert.ok(ck, `custom charging power not applied (${await page.evaluate(() => chargeKw(S.data))} kW)`);
+  assert.ok(await page.evaluate(() => S.data.chargeMode === 3), 'custom power changed the charger type');
   await page.evaluate(() => { DP.charging = false; S.demoCharging = false; DP.manual = false; });
   // leaving demo clears the simulations
   await page.evaluate(() => { stopDemo(); setMode('off'); }); await sleep(3500);

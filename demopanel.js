@@ -12,6 +12,7 @@ const DP = {
   lights: { tail: true, low: false, high: false, brake: false, indL: false, indR: false, hazard: false, reverse: false, fog: false },
   gear: 'D', eco: false, ePedal: false,
   charging: false, chargeType: 1,             // 1 = 3-pin, 2 = wallbox, 3 = rapid
+  customKw: false, chargePower: 25,           // Car tab: your own charging power (kW) for the chosen charger type
   speed: 40, kw: 20, soc: 78, temp: 14,
   hold: { speed: false, kw: false, soc: false, temp: false },
 };
@@ -35,7 +36,7 @@ function demoApply(d) {
   if (DP.gear === 'R' && !DP.hold.speed) { d.speed = 6; if (!DP.hold.kw) d.kw = 4; }
   if (DP.gear === 'P' || DP.gear === 'N') { d.speed = 0; d.motorKw = 0; if (!DP.hold.kw) d.kw = 0.4; }
   if (DP.charging) {
-    const kw = CHARGE_KW[DP.chargeType];
+    const kw = DP.customKw ? DP.chargePower : CHARGE_KW[DP.chargeType];   // the charger type still sets the cable and colours
     Object.assign(d, { demoCharging: true, kw: -kw, current: -kw * 1000 / (d.voltage || 370), chargeMode: DP.chargeType, plug: 2, speed: 0, gear: 'P', motorKw: 0 });
   }
   return d;
@@ -85,7 +86,10 @@ function dpRender() {
         <div class="label">Gear and modes</div>
         ${seg('gear', [['P', 'P'], ['R', 'R'], ['N', 'N'], ['D', 'D'], ['B', 'B']])}
         <div class="dp-row">${t('eco', 'ECO', DP)}${t('ePedal', 'e-Pedal', DP)}${t('charging', 'Charging', DP)}</div>
-        ${DP.charging ? seg('chargeType', [[1, '3-pin'], [2, 'Wallbox'], [3, 'Rapid']]) : ''}
+        ${DP.charging ? seg('chargeType', [[1, '3-pin'], [2, 'Wallbox'], [3, 'Rapid']]) + `
+        <div class="dp-sl"><label><input type="checkbox" data-a="ckw" ${DP.customKw ? 'checked' : ''}> Custom power</label>
+          <input type="range" min="0.5" max="50" step="0.5" value="${DP.chargePower}" data-ckw ${DP.customKw ? '' : 'disabled'}><b>${DP.chargePower} kW</b></div>
+        <p class="hint">The charger type sets the cable and the battery colour; the power sets the flow speed and the times. 50 kW is the most the 40 kWh Leaf takes.</p>` : ''}
         <div class="label">Values <span class="mini">(tick to hold)</span></div>
         ${sl('speed', 'Speed', 0, 90, 1, SET.units === 'mph' ? ' mph' : ' km/h')}
         ${sl('kw', 'Power', -50, 110, 1, ' kW')}
@@ -110,6 +114,8 @@ function dpRender() {
   el.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { DP.tab = b.dataset.tab; dpRender(); });
   el.querySelector('[data-a=route]')?.addEventListener('change', e => { SET.demoRoute = e.target.checked; saveSettings(); if (e.target.checked) drtStart(); else drtStop(); dpRender(); });
   el.querySelector('[data-a=manual]')?.addEventListener('change', e => { DP.manual = e.target.checked; if (!DP.manual && DP.charging) { DP.charging = false; S.demoCharging = false; } dpRender(); });
+  el.querySelector('[data-a=ckw]')?.addEventListener('change', e => { DP.customKw = e.target.checked; dpRender(); });
+  el.querySelector('[data-ckw]')?.addEventListener('input', e => { DP.chargePower = +e.target.value; e.target.nextElementSibling.textContent = `${DP.chargePower} kW`; });
   el.querySelectorAll('[data-rate]').forEach(b => b.onclick = () => { DRT.rate = +b.dataset.rate; dpRender(); });
   el.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => drtJump(b.dataset.jump));
   el.querySelector('[data-a=lose]')?.addEventListener('click', () => { DRT.lostUntil = Date.now() + 15000; dpRender(); setTimeout(dpRender, 15100); });
@@ -148,5 +154,5 @@ function dpDropOut() {
   }, 8000);
 }
 
-LeafDash.on('mode', m => { if (m !== 'demo') { DP.manual = false; DP.charging = false; DP.sim = { slow: false, aux: false, tyre: false, hot: false, lock: false }; DP.dropUntil = 0; if (typeof DRT !== 'undefined') DRT.rate = 1; } dpRender(); });
+LeafDash.on('mode', m => { if (m !== 'demo') { DP.manual = false; DP.charging = false; DP.sim = { slow: false, aux: false, tyre: false, hot: false, lock: false }; DP.dropUntil = 0; DP.customKw = false; if (typeof DRT !== 'undefined') DRT.rate = 1; } dpRender(); });
 dpRender();
