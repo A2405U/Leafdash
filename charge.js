@@ -236,7 +236,7 @@ function drawChargeScene(g, W, H, d, t) {
   g.beginPath(); mv(g, 2.2, 1.50); bz(g, 2.6, 1.545, 3.4, 1.545, 3.82, 1.49); g.stroke();
 
   // energy flowing from the charge port (in the nose) to the pack
-  drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t, { kind: d.chargeMode });
+  drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t, { kind: d.chargeMode, kw: chargeKw(d) });
 }
 
 function drawPack(g, bx, by, bw, bh, d, t) {
@@ -268,6 +268,10 @@ function drawPack(g, bx, by, bw, bh, d, t) {
   g.beginPath(); g.roundRect(bx, by, bw, bh, 4); g.stroke();
 
 }
+/** The power going into the battery now, in kW (battery power is negative while charging). */
+const chargeKw = d => Math.max(0, -(d.kw ?? 0));
+const FLOW_FULL_KW = 50, FLOW_FULL_MS = 800, FLOW_SLOWEST_MS = 8000, FLOW = { phase: 0, last: 0 };
+
 /** Energy path from the charge port to the pack: a smooth curve through pts (screen px).
  *  o.noseX: screen x of the front of the car; o.k: size scale; o.kind: chargeMode (1 3-pin, 2 wallbox, 3 rapid). */
 function drawFlow(g, pts, yG, t, o = {}) {
@@ -289,9 +293,15 @@ function drawFlow(g, pts, yG, t, o = {}) {
   g.shadowBlur = 0;
   g.strokeStyle = 'rgba(76,195,255,.35)'; g.lineWidth = 2; g.setLineDash([3, 5]);
   g.beginPath(); line.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.setLineDash([]);
-  const period = { 1: 3900, 2: 2100, 3: 975 }[o.kind] || 2700, dots = o.kind === 3 ? 7 : 5;   // faster charging, faster flow (all at two thirds of their first speed)
+  // The dots move at a speed in proportion to the charging power: 50 kW (the most a 40 kWh Leaf takes) = full speed,
+  // a port-to-battery trip in 0.8 s. Never slower than 8 s a trip, so a 3-pin charge (about 2.3 kW) still visibly
+  // moves. The speed changes smoothly: the dots' position adds up over time, so a new speed never makes them jump.
+  const kw = Math.max(0, o.kw ?? 0);
+  const period = Math.min(FLOW_SLOWEST_MS, FLOW_FULL_MS * FLOW_FULL_KW / Math.max(0.1, kw)), dots = kw >= 20 ? 7 : 5;
+  const dt = FLOW.last ? Math.min(200, t - FLOW.last) : 0; FLOW.last = t;
+  FLOW.phase = (FLOW.phase + dt / period) % 1;
   for (let k = 0; k < dots; k++) {
-    const u = ((t / period) + k / dots) % 1, [qx, qy] = at(u * total);
+    const u = (FLOW.phase + k / dots) % 1, [qx, qy] = at(u * total);
     g.fillStyle = `rgba(150,220,255,${0.9 - u * 0.5})`;
     g.beginPath(); g.arc(qx, qy, 2.6, 0, Math.PI * 2); g.fill();
   }
