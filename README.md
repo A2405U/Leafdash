@@ -58,7 +58,7 @@ Demo mode now drives a made-up map route so you can see how the Drive screen han
 In Demo mode a **Test panel** button opens three tabs. Nothing in it talks to the car.
 
 - **Route:** the made-up map route on or off; demo speed 1×, 2× or 4×; **Jump to** lights, a zebra, a speed camera, the dual carriageway, the red-light camera, a roundabout or a mini-roundabout; and **Lose GPS 15 s**. The route has town streets, a 40 mph country road and a dual carriageway, so all three scenery mixes show.
-- **Car:** with manual control on, set the lights, gear, ECO, e-Pedal and charging, and hold speed, power, charge or battery temperature at a value.
+- **Car:** with manual control on, set the lights, gear, ECO, e-Pedal and charging, and hold speed, power, charge or battery temperature at a value. While charging, pick 3-pin, Wallbox or Rapid, and tick **Custom power** to set your own charging power (0.5–50 kW): the charger type sets the cable and battery colour, the power sets the flow speed and the times.
 - **Simulate:** a slow adapter (the "Slow link" badge), an adapter drop-out for 8 s, a low tyre, a low 12 V battery, a hot battery, the driving lock (Settings and Debug lock while the demo car moves), the "Before you drive" note, and a voice test.
 ## Car model
 
