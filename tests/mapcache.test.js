@@ -14,7 +14,7 @@ module.exports = async ({ browser, base, assert, note }) => {
   const page = await ctx.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
   let n = 0; const tick = setInterval(() => ctx.setGeolocation({ latitude: 51.5 + (n++ % 2) * 0.00001, longitude: -0.12, accuracy: 5 }).catch(() => {}), 1000);
   const st = () => page.evaluate(async () => ({ fails: OSM.fails || 0, matched: !!OSM.path, saved: await osmcCount() }));
-  const go = async () => { await page.goto(base); await sleep(500); await page.click('#btnConnect'); await sleep(4000); await page.evaluate(() => document.querySelectorAll('.modal-wrap').forEach(w => w.remove())); };
+  const go = async () => { await page.goto(base); await page.evaluate(() => { window.__osmc = []; LeafDash.on('osmc', e => __osmc.push(e)); }); await sleep(500); await page.click('#btnConnect'); await sleep(4000); await page.evaluate(() => document.querySelectorAll('.modal-wrap').forEach(w => w.remove())); };
   try {
     await go();
     assert.strictEqual((await st()).fails, 1, 'first failure not counted');
@@ -23,10 +23,12 @@ module.exports = async ({ browser, base, assert, note }) => {
     mode = 'ok'; await sleep(22000);
     let s = await st();
     assert.ok(s.matched && s.saved === 1 && s.fails === 0, 'road not loaded or not remembered when the servers came back');
+    assert.ok(await page.evaluate(() => __osmc.some(e => e.op === 'saved')), 'no "saved" event for the drive recorder');
     mode = 'busy'; const before = hits;
     await go(); await sleep(1000);
     s = await st();
     assert.ok(s.matched && hits === before, `reopening did not load the road from the phone (requests: ${hits - before})`);
+    assert.ok(await page.evaluate(() => __osmc.some(e => e.op === 'lookup' && e.hit && e.loaded > 0)), 'no "lookup" event showing the area loaded from the phone');
     await page.click('#btnSettings'); await page.evaluate(() => { document.querySelector('[data-sec="drive"]').open = true; }); await sleep(400);
     await page.click('[data-osmc-clear]'); await sleep(300);
     assert.strictEqual(await page.evaluate(() => osmcCount()), 0, '"Forget saved map areas" did not clear them');

@@ -85,23 +85,34 @@ async function osmcIndex() {
 async function osmcLoadNear(lat, lon) {
   const here = { lat, lon };
   const near = (await osmcIndex()).map(e => ({ e, d: metres(e, here) })).filter(x => x.d < 800).sort((a, b) => a.d - b.d);
+  let loaded = 0;
   for (const { e } of near) {
     if (OSMC.loaded.has(e.k)) continue;
     const json = await osmcReq((await osmcStore()).get(e.k));
     OSMC.loaded.add(e.k);
-    if (json) osmLoad(json, true);
+    if (json) { osmLoad(json, true); loaded++; }
   }
-  return near.length && near[0].d < 350 ? { lat: near[0].e.lat, lon: near[0].e.lon } : null;
+  const hit = near.length && near[0].d < 350;
+  window.LeafDash?.emit('osmc', { op: 'lookup', known: OSMC.keys.length, nearestM: near.length ? Math.round(near[0].d) : null, loaded, hit: !!hit });   // drive recorder
+  return hit ? { lat: near[0].e.lat, lon: near[0].e.lon } : null;
 }
 async function osmcPut(lat, lon, json) {
   try {
     const idx = await osmcIndex(), e = osmcParse(osmcKey(lat, lon, Date.now()));
-    const st = await osmcStore('readwrite');
-    st.put(json, e.k);
-    idx.push(e); OSMC.loaded.add(e.k);
-    idx.sort((a, b) => a.at - b.at);
-    while (idx.length > OSMC.MAX) st.delete(idx.shift().k);       // forget the oldest
-  } catch {}
+    const db = await htDb();
+    await new Promise((res, rej) => {                             // wait until the phone confirms it's written
+      const tx = db.transaction('osmcache', 'readwrite'), st = tx.objectStore('osmcache');
+      st.put(json, e.k);
+      idx.push(e); idx.sort((a, b) => a.at - b.at);
+      while (idx.length > OSMC.MAX) st.delete(idx.shift().k);     // forget the oldest
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error || new Error('write aborted'));
+    });
+    OSMC.loaded.add(e.k);
+    window.LeafDash?.emit('osmc', { op: 'saved', known: idx.length });
+  } catch (err) {
+    window.LeafDash?.emit('osmc', { op: 'save failed', why: String(err?.message || err) });
+    log('Could not remember this map area: ' + (err?.message || err));
+  }
 }
 async function osmcClear() {
   try { (await osmcStore('readwrite')).clear(); } catch {}

@@ -21,7 +21,8 @@
    File format: JSON Lines (one JSON object per line). Each line has
    k (kind) and t (ms since the start). Kinds: head, d (car data changes),
    cells, elm (adapter command c and reply r, or err), bad (a reply that came
-   back broken), link (adapter speed each minute: requests, average and slowest ms, cycle ms), gps, osm (map data), osmerr (a failed map download), road,
+   back broken), link (adapter speed each minute: requests, average and slowest ms, cycle ms), osmc
+   (remembered map areas: each lookup and save), gps, osm (map data), osmerr (a failed map download), road,
    app, mode, log, err, end.
    ===================================================================== */
 
@@ -193,6 +194,7 @@ LeafDash.on('badreply', ({ why, text }) => {
   recLine('bad', { why, text });
 });
 LeafDash.on('osmerr', e => { if (REC.on) recLine('osmerr', e); });
+LeafDash.on('osmc', e => { if (REC.on) recLine('osmc', e); });              // remembered map areas: lookups and saves
 LeafDash.on('osm', json => { if (REC.on) { REC.maps++; recLine('osm', { json }); } });
 window.addEventListener('error', e => recLine('err', { m: String(e.message || e), src: e.filename ? `${e.filename.split('/').pop()}:${e.lineno}` : null }));
 window.addEventListener('unhandledrejection', e => recLine('err', { m: 'promise: ' + String(e.reason?.message || e.reason) }));
