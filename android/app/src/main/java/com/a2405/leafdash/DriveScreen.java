@@ -1,4 +1,4 @@
-package app.leafdash.car;
+package com.a2405.leafdash;
 
 import androidx.annotation.NonNull;
 import androidx.car.app.AppManager;

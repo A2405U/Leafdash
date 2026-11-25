@@ -1,11 +1,16 @@
-# Builds the Android Auto test app (android/) and attaches the installable file to the run.
-# It runs when the Android code changes, or by hand from the Actions tab ("Run workflow").
-name: Android test app
+# Builds the Leaf Dash Android app (android/) with the web app packed inside, and attaches the installable file
+# to the run. It runs when the Android code or the web app changes, or by hand from the Actions tab ("Run workflow").
+name: Android app
 
 on:
   push:
     paths:
       - 'android/**'
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - 'icons/**'
+      - 'vendor/**'
       - '.github/workflows/android.yml'
   workflow_dispatch:
 
@@ -24,12 +29,12 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
-      - name: Build the test app
+          gradle-version: '8.14.3'
+      - name: Build the app
         run: gradle -p android :app:assembleDebug --no-daemon --stacktrace
       - name: Attach the app file
         uses: actions/upload-artifact@v4
         with:
-          name: leafdash-car-test
+          name: leafdash-android
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error

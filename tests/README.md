@@ -24,6 +24,7 @@ They need [Playwright](https://playwright.dev) with Chromium: `npm install playw
 | `replay` | Records the demo route, then replays it: no map downloads, 8×, losing GPS, seeking, next junction, stopping. |
 | `demo` | The Demo test panel: jumping to each feature, 4×, losing GPS, slow link, drop-out, alerts, the driving lock, the note, the Car tab. |
 | `cameras` | Every common camera tagging is recognised; each demo-route camera shows ahead (over its lights); the switch hides them. |
+| `native` | The Android app's Bluetooth bridge (`leafnative.js`) on a stand-in for the Java side: the two read-only lists match, connecting, a write refused by the native guard, voice, saving a file, reconnecting and connecting by itself. |
 
 `mock-adapter.js` is a fake LELink² that answers like the car and records every command. Set `window.__lat` (ms per reply)
 and `window.__spd` (speed in tenths of km/h) to try other conditions. No test ever reaches a real service.

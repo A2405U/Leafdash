@@ -968,5 +968,6 @@ if (!navigator.bluetooth) {
   $('noBt').classList.remove('hidden');
   $('btnConnect').disabled = true;
 }
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// The Android app has its files built in (and no sw.js), so only the website needs the offline cache.
+if ('serviceWorker' in navigator && !window.LeafNative) navigator.serviceWorker.register('sw.js').catch(() => {});
 /* start-up happens in main.js once every module has loaded */
