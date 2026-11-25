@@ -15,7 +15,7 @@
    ===================================================================== */
 
 const RP = { on: false, lines: [], name: '', dur: 0, t: 0, idx: 0, rate: 1, playing: true, lostUntil: -1, timer: null, last: 0 };
-const rpRate = () => (RP.on && RP.playing ? RP.rate : RP.on ? 0 : 1);   // drive.js scales the scroll by this
+const rpRate = () => RP.on ? (RP.playing ? RP.rate : 0) : (typeof DRT !== 'undefined' && DRT.on ? DRT.rate || 1 : 1);   // drive.js scales the scroll by this (replay, or the demo route at 2×/4×)
 const rpClock = ms => { const s = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
 /** Turn a recording (text, or a .gz file's bytes) into its lines. */

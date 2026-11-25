@@ -202,7 +202,8 @@ function safeLock(on) {
 }
 
 function safeTick() {
-  const now = Date.now(), live = S.mode === 'on' && now - S.lastUpdate < 8000;
+  const tryIt = S.mode === 'demo' && typeof DP !== 'undefined' && DP.sim.lock;   // test panel: try the lock in Demo
+  const now = Date.now(), live = (S.mode === 'on' || tryIt) && now - S.lastUpdate < 8000;
   const kmh = live ? safeKmh() : null;
   if (kmh != null && kmh > SAFE_LOCK_KMH) { SAFE.slowSince = 0; SAFE.fastSince ||= now; if (now - SAFE.fastSince > 2000) safeLock(true); }
   else { SAFE.fastSince = 0; if (kmh == null || kmh < SAFE_UNLOCK_KMH) { SAFE.slowSince ||= now; if (now - SAFE.slowSince > 3000 || !live) safeLock(false); } }

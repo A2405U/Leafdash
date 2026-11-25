@@ -55,8 +55,11 @@ Demo mode now drives a made-up map route so you can see how the Drive screen han
 
 ## Demo test panel
 
-In Demo mode a **Test panel** button appears. Turn on *Manual control* to switch each light (side/tail, dipped, main beam, brake, indicators, hazards, reverse, rear fog), pick the gear, toggle ECO, e-Pedal and charging (3-pin, wallbox or rapid), and hold speed, power, charge and battery temperature with sliders. *Move up* docks it at the top so it doesn't hide what you're checking. It only changes the simulated data, never the car.
+In Demo mode a **Test panel** button opens three tabs. Nothing in it talks to the car.
 
+- **Route:** the made-up map route on or off; demo speed 1×, 2× or 4×; **Jump to** lights, a zebra, a speed camera, the dual carriageway, the red-light camera, a roundabout or a mini-roundabout; and **Lose GPS 15 s**. The route has town streets, a 40 mph country road and a dual carriageway, so all three scenery mixes show.
+- **Car:** with manual control on, set the lights, gear, ECO, e-Pedal and charging, and hold speed, power, charge or battery temperature at a value.
+- **Simulate:** a slow adapter (the "Slow link" badge), an adapter drop-out for 8 s, a low tyre, a low 12 V battery, a hot battery, the driving lock (Settings and Debug lock while the demo car moves), the "Before you drive" note, and a voice test.
 ## Car model
 
 The Drive and charging screens use your Leaf model pictures (`car-rear.webp`, `car-side.webp`). Brake, tail, reverse and indicator lights glow on the picture, the headlights light the road, and *Car colour* tints it. Settings → Drive screen → *Car model* switches back to the simple drawn car. An uploaded photo of your own car still takes priority.

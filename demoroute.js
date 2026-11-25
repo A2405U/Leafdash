@@ -14,7 +14,7 @@
    would, so what you see is how the app handles real roads.
    ===================================================================== */
 
-const DRT = { on: false, timer: null, fixTimer: null, s: 0, v: 0, a: 0, route: null, stopsDone: new Set(), waitUntil: 0 };
+const DRT = { on: false, timer: null, fixTimer: null, s: 0, v: 0, a: 0, route: null, stopsDone: new Set(), waitUntil: 0, rate: 1, lostUntil: 0 };
 
 function drtBuild() {
   let nid = 1;
@@ -117,7 +117,7 @@ function drtBuild() {
   }
   for (const st of stops) { const i = Math.round(st / step); if (prof[i] != null) prof[i] = 0; }
   for (let i = prof.length - 2; i >= 0; i--) prof[i] = Math.min(prof[i], Math.sqrt(prof[i + 1] ** 2 + 2 * 1.6 * step));
-  return { ways, feats, pts, len: s, prof, step, stops, posAt };
+  return { ways, feats, pts, len: s, prof, step, stops, posAt, marks: { dual: N3, rbt: cen } };
 }
 
 function drtStart() {
@@ -135,7 +135,10 @@ function drtStart() {
   DRT.ll = ll;
   let last = performance.now();
   DRT.timer = setInterval(() => {
-    const now = performance.now(), dt = Math.min(0.5, (now - last) / 1000); last = now;
+    const now = performance.now(), dt0 = Math.min(0.5, (now - last) / 1000); last = now;
+    for (let k = 0; k < (DRT.rate || 1); k++) drtStep(dt0, now);              // 2× and 4× just run more steps
+  }, 50);
+  function drtStep(dt, now) {
     const i = Math.min(R.prof.length - 1, Math.round(DRT.s / R.step));
     let target = R.prof[i];
     const stop = R.stops.find(st => !DRT.stopsDone.has(st) && Math.abs(st - DRT.s) < 0.5);
@@ -153,14 +156,15 @@ function drtStart() {
       if (DRT.s >= pending) { DRT.s = pending; DRT.v = 0; DRT.a = 0; }
       else { const need = DRT.v * DRT.v / (2 * gap); if (need > 0.3) { DRT.a = -Math.min(4, need); DRT.v = Math.max(0, DRT.v + DRT.a * dt); } }
     }
-    if (DRT.s > R.len - 10) { drtStop(); drtStart(); }   // loop back to the start
-  }, 50);
+    if (DRT.s > R.len - 10) { DRT.s = 0; DRT.v = 0; DRT.stopsDone.clear(); DRT.waitUntil = 0; OSM.path = null; OSM.Hs = null; OSM.prevFixAt = 0; }   // back to the start
+  }
   const fix = () => {
-    if (!DRT.on) return;
+    if (!DRT.on || Date.now() < DRT.lostUntil) return;                   // "Lose GPS" in the test panel
     const p = R.posAt(DRT.s), h = Math.atan2(p.b.x - p.a.x, p.b.y - p.a.y) * 180 / Math.PI;
     const q = DRT.ll({ x: p.x + (Math.random() - 0.5) * 3, y: p.y + (Math.random() - 0.5) * 3 });
     osmOnFix(q.lat, q.lon, h, DRT.v, true);
   };
+  DRT.fix = fix;
   fix(); DRT.fixTimer = setInterval(fix, 1000);
 }
 
@@ -168,6 +172,22 @@ function drtStop() {
   if (!DRT.on) return;
   clearInterval(DRT.timer); clearInterval(DRT.fixTimer);
   DRT.on = false; OSM.fixture = false; OSM.path = null; OSM.ways.clear(); OSM.nodeWays.clear(); OSM.feats.clear(); OSM.O = null;
+}
+
+/** Test panel: jump to just before a kind of feature on the route (lights, zebra, rbt, mini, redcam, speedcam, dual). */
+function drtJump(kind) {
+  if (!DRT.on) return false;
+  const R = DRT.route, f = R.feats.find(x => x.kind === kind), p = f ? f.p : R.marks[kind];
+  if (!p) return false;
+  let best = null;
+  for (let d = 0; d < R.len; d += 2) { const q = R.posAt(d); const dd = Math.hypot(q.x - p.x, q.y - p.y); if (!best || dd < best.dd) best = { dd, d }; }
+  const s = Math.max(0, best.d - 160);
+  DRT.s = s; DRT.waitUntil = 0;
+  DRT.stopsDone = new Set(R.stops.filter(st => st < s));
+  DRT.v = R.prof[Math.min(R.prof.length - 1, Math.round(s / R.step))] || 8;
+  OSM.path = null; OSM.Hs = null; OSM.prevFixAt = 0;                    // start the road drawing afresh there
+  DRT.lostUntil = 0; DRT.fix?.();
+  return true;
 }
 
 /** Called by the demo generator: speed and power follow the route. */
