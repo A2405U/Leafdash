@@ -236,13 +236,14 @@ function drawChargeScene(g, W, H, d, t) {
   g.beginPath(); mv(g, 2.2, 1.50); bz(g, 2.6, 1.545, 3.4, 1.545, 3.82, 1.49); g.stroke();
 
   // energy flowing from the charge port (in the nose) to the pack
-  drawFlap(g, [P(0.52), Y(0.86)], [P(0.57), Y(1.37)], 0.04 * scale, 0.16 * scale);
   drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t, { kind: d.chargeMode });
 }
 
 function drawPack(g, bx, by, bw, bh, d, t) {
   const soc = Math.max(0, Math.min(100, d.soc ?? 0));
-  const fillCol = soc < 15 ? '#ff5d6c' : soc < 30 ? '#ffb84d' : '#3ddc97';
+  // colour shows the charger (like Samsung's): dark green 3-pin, green wallbox/BYOC, blue rapid;
+  // yellow below 25% whatever the charger, red below 15%
+  const fillCol = soc < 15 ? '#ff5d6c' : soc < 25 ? '#ffd24d' : ({ 1: '#1f9e64', 3: '#4cc3ff' }[d.chargeMode] || '#3ddc97');
   g.save();
   g.shadowColor = fillCol; g.shadowBlur = 18;
   g.fillStyle = 'rgba(10,20,18,.9)';
@@ -296,35 +297,6 @@ function drawFlow(g, pts, yG, t, o = {}) {
   }
 }
 
-/** The charge-port lid, open, seen from the side. On the Leaf it's a big lid over the top of the nose, hinged at the
- *  bonnet edge, standing almost upright and leaning slightly back. Its outer skin is flat (the back edge here) and its
- *  inside bulges in the middle (the part that fills the port recess when shut), which now faces forward.
- *  hinge/tip are screen points; t is its thickness at the ends; bulge how far the middle sticks out forward. */
-function drawFlap(g, hinge, tip, t, bulge) {
-  const [hx, hy] = hinge, [tx, ty] = tip, L = Math.hypot(tx - hx, ty - hy) || 1;
-  const fx = (ty - hy) / L, fy = -(tx - hx) / L;                        // unit normal pointing forward (towards the nose)
-  const mx = (hx + tx) / 2, my = (hy + ty) / 2;
-  const shape = () => {
-    g.beginPath();
-    g.moveTo(hx, hy); g.lineTo(tx, ty);                                 // flat outer skin
-    g.quadraticCurveTo(tx + fx * t * 1.2, ty + fy * t * 1.2, tx + fx * t, ty + fy * t + t * 0.4);   // rounded top edge
-    g.bezierCurveTo(mx + fx * bulge + (tx - hx) * 0.25, my + fy * bulge + (ty - hy) * 0.25,
-      mx + fx * bulge - (tx - hx) * 0.25, my + fy * bulge - (ty - hy) * 0.25, hx + fx * t, hy + fy * t);   // the bulge
-    g.closePath();
-  };
-  g.save(); g.lineJoin = 'round';
-  const grd = g.createLinearGradient(hx, hy, hx + fx * bulge, hy + fy * bulge);
-  grd.addColorStop(0, 'rgba(150,160,172,.95)'); grd.addColorStop(1, 'rgba(95,105,117,.95)');
-  g.fillStyle = grd; shape(); g.fill();
-  g.strokeStyle = 'rgba(225,232,240,.85)'; g.lineWidth = 1.2; shape(); g.stroke();
-  // the line where the bulge meets the lid's rim, a little inside the front edge
-  g.strokeStyle = 'rgba(255,255,255,.28)'; g.lineWidth = 1;
-  g.beginPath(); g.moveTo(hx + fx * t * 0.8 + (tx - hx) * 0.08, hy + fy * t * 0.8 + (ty - hy) * 0.08);
-  g.bezierCurveTo(mx + fx * bulge * 0.7 + (tx - hx) * 0.2, my + fy * bulge * 0.7 + (ty - hy) * 0.2,
-    mx + fx * bulge * 0.7 - (tx - hx) * 0.2, my + fy * bulge * 0.7 - (ty - hy) * 0.2, tx + fx * t * 0.8 - (tx - hx) * 0.08, ty + fy * t * 0.8 - (ty - hy) * 0.08);
-  g.stroke();
-  g.restore();
-}
 
 /* The charging cable: out of the port in one smooth curve, easing down past the front of the car to lie flat on the
    ground, then off the left edge, as if to a charger out of view. It's drawn before the car: the port is in the middle
@@ -337,11 +309,11 @@ const CABLES = {
 };
 function drawCable(g, px, py, noseX, yG, k, kind) {
   const c = CABLES[kind] || CABLES[2];
-  const gx = Math.max(Math.min(noseX, px) * 0.25, Math.min(noseX, px) - 70 * k), gy = yG + 2;   // where it touches the ground
+  const gx = Math.max(Math.min(noseX, px) * 0.2, Math.min(noseX, px) - 84 * k), gy = yG + 2;   // where it touches the ground
   const span = px - gx;
   const path = () => {
     g.beginPath(); g.moveTo(px, py);
-    g.bezierCurveTo(px - span * 0.45, py, gx + span * 0.4, gy, gx, gy);   // level out of the port, level onto the ground: no corners
+    g.bezierCurveTo(px - span * 0.7, py, gx + span * 0.35, gy, gx, gy);   // level out of the port for a while (clear of the bumper), level onto the ground
     g.lineTo(-40, gy);                                                     // along the ground, off screen
   };
   g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
