@@ -133,21 +133,22 @@ function drawChargeSceneImg(g, W, H, d, t) {
   bg.addColorStop(0, '#111a24'); bg.addColorStop(1, '#05070a');
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
 
-  const sc = Math.min(W * 0.92 / SIDE.w, H * 0.42 / SIDE.h);
-  const w = SIDE.w * sc, h = SIDE.h * sc, x = (W - w) / 2, yG = H * 0.52, y = yG - SIDE.ground * sc;
+  // centred when there's room in front of it for the charging cable; otherwise (phone held upright) moved right
+  const sc = Math.min(W * 0.8 / SIDE.w, H * 0.42 / SIDE.h);
+  const w = SIDE.w * sc, h = SIDE.h * sc, x = (W - w) / 2 >= W * 0.12 ? (W - w) / 2 : W - w - W * 0.04, yG = H * 0.52, y = yG - SIDE.ground * sc;
   const at = (px, py) => [x + px * sc, y + py * sc];
 
   // floor glow and contact shadow
   const fl = g.createLinearGradient(0, yG, 0, yG + 40);
   fl.addColorStop(0, 'rgba(76,195,255,.10)'); fl.addColorStop(1, 'rgba(76,195,255,0)');
-  g.fillStyle = fl; g.fillRect(x - 30, yG, w + 60, 40);
+  g.fillStyle = fl; g.fillRect(0, yG, W, 40);                              // full width: the cable lies on it too
   g.fillStyle = 'rgba(0,0,0,.5)';
-  g.beginPath(); g.ellipse(W / 2, yG + 1, w * 0.48, 6, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(x + w / 2, yG + 1, w * 0.48, 6, 0, 0, Math.PI * 2); g.fill();
 
   // x-ray car, slightly see-through so the pack reads as inside it
   g.save(); g.globalAlpha = 0.9; g.drawImage(carImgTinted('side'), x, y, w, h); g.restore();
 
   const [bx, by] = at(SIDE.pack[0], SIDE.pack[1]), [bx2, by2] = at(SIDE.pack[2], SIDE.pack[3]);
   drawPack(g, bx, by, bx2 - bx, by2 - by, d, t);
-  drawFlow(g, SIDE.flow.map(p => at(...p)), yG, t);
+  drawFlow(g, SIDE.flow.map(p => at(...p)), yG, t, { noseX: at(18, 0)[0], k: Math.max(0.7, Math.min(1.8, w / 360)), kind: d.chargeMode });
 }

@@ -49,6 +49,10 @@ module.exports = async ({ browser, base, assert, note }) => {
   // Car tab is still there
   await page.click('[data-tab=car]'); await sleep(200);
   assert.ok(await page.evaluate(() => !!document.querySelector('[data-a=manual]') && !!document.querySelector('[data-r=speed]')), 'Car tab missing its controls');
+  // charging screen: each charger type draws its own cable (3-pin, wallbox, rapid) without errors
+  for (const n of [1, 2, 3]) { await page.evaluate(n => { DP.manual = true; DP.charging = true; S.demoCharging = true; DP.chargeType = n; showView('drive'); }, n); await sleep(1500); }
+  assert.ok(await page.evaluate(() => CH.active), 'the charging screen did not show');
+  await page.evaluate(() => { DP.charging = false; S.demoCharging = false; DP.manual = false; });
   // leaving demo clears the simulations
   await page.evaluate(() => { stopDemo(); setMode('off'); }); await sleep(3500);
   assert.ok(await page.evaluate(() => $('slowLink').classList.contains('hidden') && !DP.sim.slow && !SAFE.locked), 'simulations stayed on after leaving Demo');
