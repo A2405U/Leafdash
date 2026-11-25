@@ -304,8 +304,8 @@ function drawFlow(g, pts, yG, t, o = {}) {
    a thin grey 3-pin lead, a thicker dark Type 2 wallbox cable, or a heavy black CHAdeMO rapid cable. */
 const CABLES = {
   1: { w: 1.9, col: '#8d98a5', edge: '#c3ccd6' },   // 3-pin: thin and light
-  2: { w: 4.6, col: '#4a5563', edge: '#8793a0' },   // wallbox / BYOC (Type 2): mid grey, clear against the floor
-  3: { w: 7.5, col: '#363e49', edge: '#6e7a88' },   // rapid (CHAdeMO): heavy charcoal, lighter than the background
+  2: { w: 3.45, col: '#4a5563', edge: '#8793a0' },   // wallbox / BYOC (Type 2): mid grey, clear against the floor
+  3: { w: 6.0, col: '#363e49', edge: '#6e7a88' },   // rapid (CHAdeMO): heavy charcoal, lighter than the background
 };
 function drawCable(g, px, py, noseX, yG, k, kind) {
   const c = CABLES[kind] || CABLES[2];
