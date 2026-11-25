@@ -289,7 +289,7 @@ function drawFlow(g, pts, yG, t, o = {}) {
   g.shadowBlur = 0;
   g.strokeStyle = 'rgba(76,195,255,.35)'; g.lineWidth = 2; g.setLineDash([3, 5]);
   g.beginPath(); line.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.setLineDash([]);
-  const period = { 1: 2600, 2: 1400, 3: 650 }[o.kind] || 1800, dots = o.kind === 3 ? 7 : 5;   // faster charging, faster flow
+  const period = { 1: 3900, 2: 2100, 3: 975 }[o.kind] || 2700, dots = o.kind === 3 ? 7 : 5;   // faster charging, faster flow (all at two thirds of their first speed)
   for (let k = 0; k < dots; k++) {
     const u = ((t / period) + k / dots) % 1, [qx, qy] = at(u * total);
     g.fillStyle = `rgba(150,220,255,${0.9 - u * 0.5})`;
