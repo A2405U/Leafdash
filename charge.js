@@ -107,6 +107,8 @@ function drawChargeScene(g, W, H, d, t) {
   const col = hexRgb(SET.carColour || '#e6e8eb');
   // side profile in metres: x from the front bumper (0) to the rear (4.4), y up from the ground
   const P = x => X(CAR_LEN - x);
+  const ck = Math.max(0.7, Math.min(1.8, scale / 65));
+  drawCable(g, P(0.16), Y(0.765), P(0), yG, ck, d.chargeMode);        // behind the car
   const mv = (p, x, y) => p.moveTo(P(x), Y(y)), ln = (p, x, y) => p.lineTo(P(x), Y(y));
   const bz = (p, a, b, c, d, e, f) => p.bezierCurveTo(P(a), Y(b), P(c), Y(d), P(e), Y(f));
   const WF = 0.93, WR = 3.63, AR = 0.42, TR = 0.33;     // wheel centres, arch and tyre radius
@@ -234,8 +236,8 @@ function drawChargeScene(g, W, H, d, t) {
   g.beginPath(); mv(g, 2.2, 1.50); bz(g, 2.6, 1.545, 3.4, 1.545, 3.82, 1.49); g.stroke();
 
   // energy flowing from the charge port (in the nose) to the pack
-  drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t,
-    { noseX: P(0), k: Math.max(0.7, Math.min(1.8, scale / 65)), kind: d.chargeMode });
+  drawFlap(g, [P(0.22), Y(0.79)], [P(0.15), Y(1.06)], 9 * ck);
+  drawFlow(g, [[P(0.16), Y(0.765)], [P(0.55), Y(0.80)], [P(WF), Y(0.78)], [P(1.30), Y(0.70)], [bx + 6, by + bh / 2]], yG, t, { kind: d.chargeMode });
 }
 
 function drawPack(g, bx, by, bw, bh, d, t) {
@@ -292,11 +294,27 @@ function drawFlow(g, pts, yG, t, o = {}) {
     g.fillStyle = `rgba(150,220,255,${0.9 - u * 0.5})`;
     g.beginPath(); g.arc(qx, qy, 2.6, 0, Math.PI * 2); g.fill();
   }
-  drawCable(g, portX, portY, o.noseX ?? portX - 20, yG, o.k || 1, o.kind);
+}
+
+/** The charge-port lid, open: hinged at the back edge of the port, standing up from the nose and tilted a little
+ *  forward. hinge/tip are screen points; t is its thickness. Drawn in the car's own grey outline style. */
+function drawFlap(g, hinge, tip, t) {
+  const [hx, hy] = hinge, [tx, ty] = tip, L = Math.hypot(tx - hx, ty - hy) || 1, nx = (ty - hy) / L * t, ny = -(tx - hx) / L * t;
+  g.save();
+  // a slightly rounded panel: its face shows a little at this angle, with a lighter rim along the outer edge
+  const grd = g.createLinearGradient(hx, hy, tx, ty);
+  grd.addColorStop(0, 'rgba(120,130,142,.92)'); grd.addColorStop(1, 'rgba(165,174,186,.92)');
+  g.fillStyle = grd; g.strokeStyle = 'rgba(225,232,240,.85)'; g.lineWidth = 1.1; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(hx, hy); g.lineTo(tx, ty);
+  g.quadraticCurveTo(tx + nx * 0.6, ty + ny * 0.6 - t * 0.15, tx + nx, ty + ny);
+  g.lineTo(hx + nx, hy + ny); g.closePath(); g.fill(); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.moveTo(hx + nx * 0.5, hy + ny * 0.5); g.lineTo(tx + nx * 0.5, ty + ny * 0.5); g.stroke();
+  g.restore();
 }
 
 /* The charging cable: out of the port in one smooth curve, easing down past the front of the car to lie flat on the
-   ground, then off the left edge, as if to a charger out of view. Its thickness and colour show the charger in use:
+   ground, then off the left edge, as if to a charger out of view. It's drawn before the car: the port is in the middle
+   of the nose, so from the side its end is hidden behind the bodywork. Its thickness and colour show the charger in use:
    a thin grey 3-pin lead, a thicker dark Type 2 wallbox cable, or a heavy black CHAdeMO rapid cable. */
 const CABLES = {
   1: { w: 2.6, col: '#8d98a5', edge: '#c3ccd6' },   // 3-pin
