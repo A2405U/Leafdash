@@ -125,7 +125,7 @@ function drawCarImg(g, cam, opt) {
 /* ---------------- Charging screen (side view) ---------------- */
 // key points on car-side.webp (1600 × 630): front on the left
 const SIDE = { w: 1600, h: 630, ground: 618, pack: [505, 500, 1165, 534], port: [108, 288],
-  lid: [[138, 268], [112, 196]],                                  // open charge-port lid: hinge (back edge of the port), tip
+  lid: [[196, 236], [216, 92]],                                   // open charge-port lid: hinge at the bonnet edge, tip (leaning slightly back)
   // route from the port over the front wheel arch, down behind the wheel to the pack
   flow: [[108, 288], [190, 330], [335, 345], [450, 380], [480, 470], [511, 517]] };
 
@@ -151,7 +151,7 @@ function drawChargeSceneImg(g, W, H, d, t) {
   drawCable(g, ...at(...SIDE.port), at(18, 0)[0], yG, ck, d.chargeMode);
   // x-ray car, slightly see-through so the pack reads as inside it
   g.save(); g.globalAlpha = 0.9; g.drawImage(carImgTinted('side'), x, y, w, h); g.restore();
-  drawFlap(g, at(...SIDE.lid[0]), at(...SIDE.lid[1]), 16 * sc);           // the charge-port lid, open
+  drawFlap(g, at(...SIDE.lid[0]), at(...SIDE.lid[1]), 12 * sc, 58 * sc);           // the charge-port lid, open
 
   const [bx, by] = at(SIDE.pack[0], SIDE.pack[1]), [bx2, by2] = at(SIDE.pack[2], SIDE.pack[3]);
   drawPack(g, bx, by, bx2 - bx, by2 - by, d, t);
