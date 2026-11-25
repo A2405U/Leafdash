@@ -4,7 +4,7 @@ Automated checks that run the app in a headless Chromium browser. They're for co
 app don't use this folder (it's excluded in `_config.yml`).
 
 ```bash
-node tests/run.js            # all of them, about 7 minutes
+node tests/run.js            # all of them, about 8 minutes
 node tests/run.js smoke      # just one, or several names
 ```
 
@@ -17,6 +17,7 @@ They need [Playwright](https://playwright.dev) with Chromium: `npm install playw
 | `readonly` | **Hard rule 1.** Connected to a fake adapter, every command sent is an adapter AT command, a `21xx` or a `22xxxx` read. Write and control services are refused before reaching the adapter, from code and from the command box. |
 | `polling` | On a realistic link (70 ms a reply) while moving, every slow value gets read: cells, temperatures, 12 V, dash range, tyres, odometer. |
 | `resync` | After a reply arrives late (past its timeout), the app gets back in step at once and keeps reading speed, gear and power. A cycle needs fewer computer switches. |
+| `slowlink` | The small "Slow link" badge shows when the adapter answers slowly, explains itself when tapped, fits a narrow header, and goes when the link speeds up. |
 | `safety` | The "Before you drive" note, and the lock on Settings and Debug while the car is moving. |
 | `recorder` | The drive recorder keeps every kind of line, never the VIN, and survives the app closing. |
 | `mapcache` | Remembered map areas and retries, with fake map servers that are busy, then back. |

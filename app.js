@@ -163,6 +163,7 @@ class Elm {
       try { r = (await reply).trim(); } catch (e) { window.LeafDash?.emit('elm', { c: cmd, err: e.message }); throw e; }
       const ms = performance.now() - t0, st = this.stats ||= { n: 0, ms: 0, max: 0 };
       st.n++; st.ms += ms; st.max = Math.max(st.max, ms);
+      (this.recent ||= []).push(ms); if (this.recent.length > 30) this.recent.shift();   // for the slow-link badge
       window.LeafDash?.emit('elm', { c: cmd, r });   // for the drive recorder
       return r;
     };
@@ -542,6 +543,23 @@ async function keepAwake() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && (S.mode === 'on' || S.mode === 'demo')) keepAwake();
+});
+
+/* ---------------- slow-link badge ----------------
+   A small amber "Slow link" in the header while the adapter is answering slowly: the middle of the last 30
+   request times over 150 ms (usual: 70–100), gone again below 120 ms. Tapping it explains in the alert line
+   (no pop-up, so it's fine while driving). */
+const LINK = { slow: false, ms: 0 };
+function linkTick() {
+  const r = S.mode === 'on' && S.elm?.recent?.length >= 15 ? S.elm.recent.slice().sort((a, b) => a - b) : null;
+  LINK.ms = r ? Math.round(r[r.length >> 1]) : 0;
+  const slow = !!r && (LINK.slow ? LINK.ms > 120 : LINK.ms > 150);
+  if (slow !== LINK.slow) { LINK.slow = slow; $('slowLink').classList.toggle('hidden', !slow); }
+}
+setInterval(linkTick, 3000);
+$('slowLink').addEventListener('click', () => {
+  const n = { text: `The adapter is answering slowly (about ${LINK.ms} ms a request, usually 70–100), so values update less often. Battery saver or Bluetooth audio can cause this.` };
+  alertNotice(n); setTimeout(() => { if (AL.notice === n) alertNotice(null); }, 9000);
 });
 
 /* ---------------- demo mode ---------------- */
