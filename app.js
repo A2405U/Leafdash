@@ -112,6 +112,7 @@ class Elm {
       }
     }
     if (!this.rx) throw new Error('No serial service found on this adapter');
+    if (server.fastLink != null) log(server.fastLink ? 'Asked the phone for a fast Bluetooth link' : 'The phone refused a fast Bluetooth link');   // Android app only
 
     this.rx.addEventListener('characteristicvaluechanged', e => {
       this.buf += this.dec.decode(e.target.value).replace(/\0/g, '');   // some ELM chips insert NULL bytes
@@ -164,6 +165,9 @@ class Elm {
       const ms = performance.now() - t0, st = this.stats ||= { n: 0, ms: 0, max: 0 };
       st.n++; st.ms += ms; st.max = Math.max(st.max, ms);
       (this.recent ||= []).push(ms); if (this.recent.length > 30) this.recent.shift();   // for the slow-link badge
+      // Adapter-only commands (switching computer, set-up) never reach the car, so they time the Bluetooth link on
+      // its own: about 60 ms on a good link, 240–360 ms when the phone picks a slow one (issue #23).
+      if (/^AT(SH|CRA|FCSH|E0|L0|S0|H[01]|SP|CAF|AT)/.test(cmd)) { st.atN = (st.atN || 0) + 1; st.atMs = (st.atMs || 0) + ms; (this.atRecent ||= []).push(ms); if (this.atRecent.length > 20) this.atRecent.shift(); }
       window.LeafDash?.emit('elm', { c: cmd, r });   // for the drive recorder
       return r;
     };
@@ -185,7 +189,10 @@ class Elm {
     log('Adapter: back in step after a late reply');
   }
   /** Average and slowest request time since the last call (for the drive recorder and a slow-link note). */
-  takeStats() { const s = this.stats; this.stats = null; return s && s.n ? { n: s.n, avgMs: Math.round(s.ms / s.n), maxMs: Math.round(s.max) } : null; }
+  takeStats() {
+    const s = this.stats; this.stats = null;
+    return s && s.n ? { n: s.n, avgMs: Math.round(s.ms / s.n), maxMs: Math.round(s.max), ...(s.atN ? { linkMs: Math.round(s.atMs / s.atN), linkN: s.atN } : {}) } : null;
+  }
 
   async write(str) {
     const bytes = this.enc.encode(str);
@@ -549,17 +556,29 @@ document.addEventListener('visibilitychange', () => {
    A small amber "Slow link" in the header while the adapter is answering slowly: the middle of the last 30
    request times over 150 ms (usual: 70–100), gone again below 120 ms. Tapping it explains in the alert line
    (no pop-up, so it's fine while driving). */
-const LINK = { slow: false, ms: 0 };
+const LINK = { slow: false, ms: 0, btMs: 0, logged: null, askedAt: 0 };
+const median = a => { const r = a.slice().sort((x, y) => x - y); return Math.round(r[r.length >> 1]); };
 function linkTick() {
-  const r = S.mode === 'on' && S.elm?.recent?.length >= 15 ? S.elm.recent.slice().sort((a, b) => a - b) : null;
-  LINK.ms = r ? Math.round(r[r.length >> 1]) : 0;
+  const r = S.mode === 'on' && S.elm?.recent?.length >= 15 ? S.elm.recent : null;
+  LINK.ms = r ? median(r) : 0;
+  const at = S.mode === 'on' && S.elm?.atRecent?.length >= 5 ? S.elm.atRecent : null;
+  LINK.btMs = at ? median(at) : 0;
+  if (at && LINK.logged !== S.elm) { LINK.logged = S.elm; log(`Bluetooth link: ${LINK.btMs} ms for an adapter-only command (good: about 60)`); }
+  // In the Android app, ask the phone again for its fastest link if it has slowed down (at most once a minute)
+  if (at && LINK.btMs > 150 && navigator.bluetooth?.fastLink && Date.now() - LINK.askedAt > 60e3) {
+    LINK.askedAt = Date.now();
+    log(`Bluetooth link slowed to ${LINK.btMs} ms: asking the phone for a fast link again${navigator.bluetooth.fastLink() ? '' : ' (refused)'}`);
+  }
   let slow = !!r && (LINK.slow ? LINK.ms > 120 : LINK.ms > 150);
   if (S.mode === 'demo' && typeof DP !== 'undefined' && DP.sim.slow) { slow = true; LINK.ms = 320; }   // test panel
   if (slow !== LINK.slow) { LINK.slow = slow; $('slowLink').classList.toggle('hidden', !slow); }
 }
 setInterval(linkTick, 3000);
 $('slowLink').addEventListener('click', () => {
-  const n = { text: `The adapter is answering slowly (about ${LINK.ms} ms a request, usually 70–100), so values update less often. Battery saver or Bluetooth audio can cause this.` };
+  const bt = LINK.btMs > 150
+    ? ` The Bluetooth link itself is slow (${LINK.btMs} ms, usually about 60): the phone chose a power-saving link.${navigator.bluetooth?.native ? ' The app has asked it for a fast one.' : ' Websites can\'t change that; the Android app can. Battery saver or Bluetooth audio may cause it.'}`
+    : ' Battery saver or Bluetooth audio can cause this.';
+  const n = { text: `The adapter is answering slowly (about ${LINK.ms} ms a request, usually 70–100), so values update less often.${bt}` };
   alertNotice(n); setTimeout(() => { if (AL.notice === n) alertNotice(null); }, 9000);
 });
 

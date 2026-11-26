@@ -201,6 +201,10 @@ final class NativeBridge implements BleLink.Listener {
     @JavascriptInterface
     public void bleDisconnect() { link.disconnect(); }
 
+    /** Ask again for the fast link (the web app does this if it measures the link slowing down mid-drive). */
+    @JavascriptInterface
+    public boolean bleFastLink() { return link.fastLink(); }
+
     void close() {
         link.close();
         if (tts != null) { tts.shutdown(); tts = null; }
