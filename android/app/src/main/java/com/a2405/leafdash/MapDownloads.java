@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -43,6 +44,18 @@ final class MapDownloads {
 
     static File dir(Context c) { return new File(c.getFilesDir(), DIR); }
 
+    /**
+     * The file for a pack name. The name comes from the page, so it must be a plain name (a–z, 0–9, dashes), and
+     * the final path is checked to be inside the maps folder before anything is read, written or deleted.
+     */
+    private File fileFor(String name, String ending) throws IOException {
+        if (name == null || !NAME.matcher(name).matches()) throw new IOException("Unknown map");
+        Path base = dir(context).toPath().toAbsolutePath().normalize();
+        Path p = base.resolve(name + ending).normalize();
+        if (!p.startsWith(base) || p.equals(base)) throw new IOException("Unknown map");
+        return p.toFile();
+    }
+
     private void answer(String id, boolean ok, String data) {
         js.accept("window.__leafMapCb&&window.__leafMapCb(" + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(data == null ? "" : data) + ")");
     }
@@ -62,11 +75,13 @@ final class MapDownloads {
 
     /** Download one pack; answers with the address the page can read it from. */
     void download(String id, String name) {
-        if (name == null || !NAME.matcher(name).matches()) { answer(id, false, "Unknown map"); return; }
+        final File part, done;
+        try { part = fileFor(name, ".part"); done = fileFor(name, ".ldmap"); }
+        catch (IOException e) { answer(id, false, e.getMessage()); return; }
         if (busy) { answer(id, false, "Another map is still downloading"); return; }
         busy = true;
         new Thread(() -> {
-            File d = dir(context), part = new File(d, name + ".part"), done = new File(d, name + ".ldmap");
+            File d = dir(context);
             try {
                 if (!d.exists() && !d.mkdirs()) throw new IOException("Couldn't make the maps folder");
                 try (OutputStream out = new FileOutputStream(part)) {
@@ -88,9 +103,10 @@ final class MapDownloads {
 
     /** Delete a downloaded pack file once the page has unpacked it. */
     void delete(String name) {
-        if (name == null || !NAME.matcher(name).matches()) return;
-        //noinspection ResultOfMethodCallIgnored
-        new File(dir(context), name + ".ldmap").delete();
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            fileFor(name, ".ldmap").delete();
+        } catch (IOException ignored) { }
     }
 
     interface Progress { void at(long got, long total); }
