@@ -4,7 +4,7 @@
 # The upload key lives only in GitHub's encrypted secrets (Settings → Secrets and variables → Actions):
 #   UPLOAD_KEYSTORE_B64    the keystore file, base64-encoded
 #   UPLOAD_STORE_PASSWORD  its password
-#   UPLOAD_KEY_ALIAS       the key's alias inside it
+#   UPLOAD_KEY_ALIAS       the key's alias inside it (optional when the file has only one key)
 #   UPLOAD_KEY_PASSWORD    the key's password
 # They're only given to this job, which uses the "play" environment: protect it in Settings → Environments
 # (deployment branch: main only), so nothing else can use the key.
@@ -37,24 +37,36 @@ jobs:
         run: |
           if [ -z "$UPLOAD_KEYSTORE_B64" ]; then echo "::error::The UPLOAD_KEYSTORE_B64 secret isn't set"; exit 1; fi
           echo "$UPLOAD_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
-      - name: Check the key file and its alias
+      - name: Find the key in the key file
         env:
           UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
           UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
         run: |
-          alias=$(printf '%s' "$UPLOAD_KEY_ALIAS" | tr -d '[:space:]')
-          found=$(keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$UPLOAD_STORE_PASSWORD" 2>&1 | sed -n 's/^\([^,]*\), .*PrivateKeyEntry.*/\1/p')
-          if [ -z "$found" ]; then echo "::error::Couldn't open the key file: check UPLOAD_KEYSTORE_B64 and UPLOAD_STORE_PASSWORD"; exit 1; fi
-          if ! printf '%s\n' "$found" | grep -qixF -- "$alias"; then
-            echo "::error::The key file has no key called what UPLOAD_KEY_ALIAS says. Keys in the file: $(echo $found | tr '\n' ' '). Set UPLOAD_KEY_ALIAS to one of those."
-            exit 1
+          # The alias is only the name of the key inside the file (not a secret). Use the secret if it names a key in
+          # the file; otherwise, if the file has exactly one key, use that one.
+          want=$(printf '%s' "$UPLOAD_KEY_ALIAS" | tr -d '[:space:]"'"'")
+          keys=$(keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$UPLOAD_STORE_PASSWORD" 2>&1 | sed -n 's/^\([^,]*\), .*PrivateKeyEntry.*/\1/p')
+          if [ -z "$keys" ]; then echo "::error::Couldn't open the key file: check UPLOAD_KEYSTORE_B64 and UPLOAD_STORE_PASSWORD"; exit 1; fi
+          use=$(printf '%s\n' "$keys" | grep -ixF -- "$want" | head -1 || true)
+          if [ -z "$use" ]; then
+            if [ -z "$UPLOAD_KEY_ALIAS" ]; then why="it's empty or not set in the play environment"
+            elif printf '%s' "$UPLOAD_KEY_ALIAS" | grep -q "[\"']"; then why="it has quote marks in it"
+            else why="it's ${#UPLOAD_KEY_ALIAS} characters long and doesn't match"; fi
+            if [ "$(printf '%s\n' "$keys" | wc -l)" -eq 1 ]; then
+              use=$keys
+              echo "::warning::UPLOAD_KEY_ALIAS doesn't name a key in the file ($why). The file has one key, '$use', so that's used. You can set UPLOAD_KEY_ALIAS to '$use', or delete it."
+            else
+              echo "::error::UPLOAD_KEY_ALIAS doesn't name a key in the file ($why). Keys in the file: $(echo $keys). Set it to one of those."
+              exit 1
+            fi
           fi
-          echo "Key file opened; alias found."
+          echo "KEY_ALIAS=$use" >> "$GITHUB_ENV"
+          echo "Using the key '$use'."
       - name: Build the signed app bundle
         env:
           UPLOAD_KEYSTORE: ${{ runner.temp }}/upload.jks
           UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
-          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_ALIAS: ${{ env.KEY_ALIAS }}
           UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
         run: gradle -p android :app:bundleRelease --no-daemon --stacktrace
