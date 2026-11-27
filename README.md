@@ -138,6 +138,15 @@ Download the counties you drive in (England by county, plus Scotland and Wales),
 - **Privacy:** downloading a county tells GitHub which county; your position is never sent.
 - **Licence:** map data © OpenStreetMap contributors, under the [ODbL](https://www.openstreetmap.org/copyright). The packs are published under the same licence.
 
+## Car screen (Android app → Android Auto)
+
+The Android app shows a Drive screen on the car's display through Android Auto. The phone keeps the one connection to the adapter and passes the car's values and its GPS to the car screen a few times a second, so there's nothing to connect on the car: connect on the phone, and the car screen follows.
+
+- **Layout:** made for small wide screens like 800 × 480: big speed and gear, the power reading beside its bar, the road, and no widgets. The tabs (Drive, Dash, Energy, Cells; never Debug) open from **☰**, on the screen or in Android Auto's own buttons.
+- **Road size:** Small, Normal or Large (Settings → Drive screen → Car screen road size, in the Android app). With no widgets under the road, the road and car are drawn bigger than on the phone.
+- **States:** "Open Leaf Dash on your phone" when the phone app isn't open; "Not connected" or "Connecting…" while the phone isn't connected; its own Demo when the phone is in Demo.
+- **Limits:** the phone app has to stay open (on screen) for now. The car screen only shows; it never saves settings or history.
+
 ## Alerts and driving aids (Settings → Alerts and driving aids)
 
 - **Gentle alerts:** one quiet line under the power bar, never a pop-up. It shows for a tyre that's low or well below the others, a hot battery (45°C and up), one cell drifting from the rest at rest, or a low 12 V battery. Each has to stay true for a while first, and a dismissed alert stays away until the problem clears.
@@ -279,6 +288,7 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `scenery.js` | Roadside scenery on the Drive screen |
 | `tests/` | Automated checks for contributors (not part of the app): see `tests/README.md` |
 | `replay.js` | Drive replay: plays a recording back in Demo mode |
+| `carscreen.js` | The Android Auto car screen: its layout and states, and the link that sends the phone's values to it |
 | `offmap.js` | Offline maps: county packs downloaded in the Android app, stored on the phone, roads loaded from them |
 | `maptools/` | Builds the offline map packs from OpenStreetMap (run weekly by GitHub Actions) |
 | `driverec.js` | Drive recorder: everything on a drive, into one file |

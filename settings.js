@@ -11,7 +11,7 @@ const CAR_COLOURS = [
   ['Red', '#b3141f'], ['Blue', '#1f4fa3'], ['Copper', '#a8643a'], ['Teal', '#2c8c8a'],
 ];
 const SET_DEFAULTS = {
-  carColour: '#e6e8eb', carImage: null, carModel: 'model', warp: 'auto', units: 'mph', usableKwh: 39,
+  carColour: '#e6e8eb', carImage: null, carModel: 'model', warp: 'auto', carZoom: 'normal', units: 'mph', usableKwh: 39,
   chips: ['soc', 'range', 'eff', 'packTemp'],     // Drive screen bottom row
   realRoad: false, demoRoute: true, scenery: true,
   chargeScreen: true,                              // side view with the battery while charging                                 // draw the real road shape from OpenStreetMap
@@ -109,6 +109,10 @@ function openSettings(section) {
         <label class="switch-row"><span>Trees, hedges, houses and lamp posts beside the road</span><input type="checkbox" data-sw="scenery" ${SET.scenery !== false ? 'checked' : ''}></label>
         <p class="hint">Drawn by the app to suit the road (town, countryside or fast road); nothing extra is downloaded.</p>
       </div>
+      ${window.LeafNative ? `<div class="set-group"><div class="label">Car screen road size</div>
+        <div class="seg" data-g="carZoom"><button data-v="small">Small</button><button data-v="normal">Normal</button><button data-v="large">Large</button></div>
+        <p class="hint">How big the road and car are on the Android Auto screen.</p>
+      </div>` : ''}
       <div class="set-group"><div class="label">Warp effect</div>
         <div class="seg" data-g="warp"><button data-v="auto">Auto (off in ECO)</button><button data-v="always">Always</button><button data-v="off">Off</button></div>
       </div>

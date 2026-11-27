@@ -626,3 +626,64 @@ body.night::after { opacity: .45; }
 .off-row { gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .off-row:last-child { border-bottom: 0; }
 .off-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* =====================================================================
+   Car screen (Android Auto, index.html?car): carscreen.js adds body.car-screen.
+   Made for small wide screens like 800 × 480: no header or widgets, the power reading beside its bar,
+   big speed and gear, the tabs behind ☰. --car-* are the edges Android Auto keeps for its own bars.
+   ===================================================================== */
+body.car-screen {
+  max-width: none; margin: 0; font-size: 16px;
+  padding: calc(var(--car-t, 0px) + 6px) calc(var(--car-r, 0px) + 8px) calc(var(--car-b, 0px) + 6px) calc(var(--car-l, 0px) + 8px);
+}
+.car-screen .top, .car-screen #connectBar, .car-screen #noBt, .car-screen #btnDriveSettings, .car-screen .drive-side,
+.car-screen .drive-info, .car-screen #demoFab, .car-screen #demoPanel, .car-screen #rpBar, .car-screen .ps-badges,
+.car-screen .ps-scale, .car-screen .tabs button[data-view="debug"] { display: none !important; }
+
+/* power: the reading on the left, the bar filling the rest of the row */
+.car-screen .powerstrip { position: static; display: flex; align-items: center; gap: 14px; margin: 0 0 6px 56px; padding: 6px 6px 6px; border: 0; background: none; }
+.car-screen .ps-row { margin: 0; flex: none; min-width: 6.2ch; }
+.car-screen .ps-kw { font-size: 28px; line-height: 1; }
+.car-screen .ps-kw small { font-size: 13px; }
+.car-screen .ps-bar { flex: 1; height: 8px; }
+.car-screen .ps-zero { top: -5px; bottom: -5px; width: 2px; }
+
+/* the drive scene fills the rest; speed and gear sized to the screen's height */
+.car-screen main { margin: 0; }
+.car-screen .scene { border-radius: 16px; }
+.car-screen .speed { top: 10px; right: 16px; }
+.car-screen .speed span { font-size: clamp(44px, 17vh, 100px); }
+.car-screen .speed small { font-size: clamp(14px, 4vh, 22px); }
+.car-screen .spd-src { font-size: 12px; }
+.car-screen .gear-big { top: 12px; left: 16px; font-size: clamp(36px, 13vh, 76px); }
+/* ECO and e-Pedal sit under the gear letter */
+.car-screen .drive-tag { top: calc(clamp(36px, 13vh, 76px) + 22px); bottom: auto; left: 16px; font-size: 13px; }
+.car-screen #epedalTag { top: calc(clamp(36px, 13vh, 76px) + 54px); }
+.car-screen .road-name { font-size: 17px; }
+.car-screen .road-sign { transform: scale(1.25); transform-origin: top right; }
+.car-screen .road-next { font-size: 15px; }
+.car-screen .alert-bar { margin: 0 0 6px 58px; }
+
+/* ☰ and the tabs it opens */
+.car-menu-btn { display: none; }
+.car-screen .car-menu-btn {
+  display: flex; flex-direction: column; justify-content: center; gap: 6px; position: fixed; z-index: 30;
+  top: calc(var(--car-t, 0px) + 6px); left: calc(var(--car-l, 0px) + 8px); width: 44px; height: 44px; padding: 0 11px;
+  border: 0; border-radius: 14px; background: var(--card);
+}
+.car-screen .car-menu-btn i { display: block; height: 3px; border-radius: 2px; background: var(--text); }
+.car-screen .tabs { display: none; }
+.car-screen.car-menu .tabs {
+  display: flex; flex-direction: column; gap: 6px; position: fixed; z-index: 29; transform: none;
+  top: calc(var(--car-t, 0px) + 58px); left: calc(var(--car-l, 0px) + 8px); bottom: auto; right: auto; width: 150px;
+  padding: 8px; border: 1px solid var(--line); border-radius: 18px; background: rgba(11,15,20,.96);
+}
+.car-screen.car-menu .tabs button { max-width: none; padding: 14px 10px; font-size: 18px; }
+
+/* "Open Leaf Dash on your phone" and the like */
+.car-msg {
+  position: fixed; z-index: 28; inset: var(--car-t, 0px) var(--car-r, 0px) var(--car-b, 0px) var(--car-l, 0px);
+  display: grid; place-items: center; text-align: center; padding: 24px; background: rgba(11,15,20,.94);
+}
+.car-msg b { display: block; font-size: clamp(24px, 8vh, 40px); margin-bottom: 10px; }
+.car-msg span { color: var(--muted); font-size: clamp(16px, 4.5vh, 22px); }

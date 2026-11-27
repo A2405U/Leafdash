@@ -23,7 +23,6 @@ Most important first:
 
 ## Not in scope
 
-- The Android app's **car screen** (Android Auto). It's still Demo only.
 - Test builds of the Android app being signed with the public test key in `android/`. That key only exists so test builds install over each other; it's not a secret.
 - Problems with the OBD adapter, the car itself, or the services the add-ons connect to (Home Assistant, MQTT brokers, A Better Route Planner).
 - Someone with your unlocked phone being able to see your data. Everything is stored in your browser on that phone (or in the Android app's own storage).

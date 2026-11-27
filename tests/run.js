@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.md': 'text/plain' };
-const ALL = ['smoke', 'readonly', 'polling', 'resync', 'slowlink', 'safety', 'recorder', 'mapcache', 'replay', 'cameras', 'demo', 'native', 'offmap'];
+const ALL = ['smoke', 'readonly', 'polling', 'resync', 'slowlink', 'safety', 'recorder', 'mapcache', 'replay', 'cameras', 'demo', 'native', 'offmap', 'carscreen'];
 
 function serve() {
   return new Promise(res => {

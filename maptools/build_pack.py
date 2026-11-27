@@ -75,7 +75,29 @@ def inside(rings, lon, lat):
 
 
 def full_tiles(rings):
-    """Tiles entirely inside the boundary (all four corners and the middle inside: close enough at 2 km)."""
+    """Tiles entirely inside the boundary. Uses shapely (fast) when it's installed."""
+    try:
+        from shapely.geometry import Polygon, box
+        from shapely.ops import unary_union
+        from shapely.prepared import prep
+    except ImportError:
+        return full_tiles_slow(rings)
+    outer = unary_union([Polygon(r).buffer(0) for r, hole in rings if not hole and len(r) >= 3])
+    holes = [Polygon(r).buffer(0) for r, hole in rings if hole and len(r) >= 3]
+    area = outer.difference(unary_union(holes)) if holes else outer
+    shape = prep(area)
+    lon0, lat0, lon1, lat1 = area.bounds
+    out = set()
+    for r in range(math.floor(lat0 / TILE_LAT), math.floor(lat1 / TILE_LAT) + 1):
+        for c in range(math.floor(lon0 / TILE_LON), math.floor(lon1 / TILE_LON) + 1):
+            s, w = r * TILE_LAT, c * TILE_LON
+            if shape.contains(box(w, s, w + TILE_LON, s + TILE_LAT)):
+                out.add(f'{r},{c}')
+    return out
+
+
+def full_tiles_slow(rings):
+    """Without shapely: all four corners and the middle inside (close enough at 2 km, but slow for big areas)."""
     pts = [p for r, _ in rings for p in r]
     lon0, lon1 = min(p[0] for p in pts), max(p[0] for p in pts)
     lat0, lat1 = min(p[1] for p in pts), max(p[1] for p in pts)
