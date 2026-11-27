@@ -62,9 +62,12 @@ final class NativeBridge implements BleLink.Listener {
     private TextToSpeech tts;
     private Runnable afterPermission, permissionRefused;
 
+    private final MapDownloads maps;
+
     NativeBridge(MainActivity activity) {
         this.activity = activity;
         this.link = new BleLink(activity, this);
+        this.maps = new MapDownloads(activity, this::run);
     }
 
     /** The page this bridge answers (set once the web view exists). */
@@ -200,6 +203,16 @@ final class NativeBridge implements BleLink.Listener {
 
     @JavascriptInterface
     public void bleDisconnect() { link.disconnect(); }
+
+    /* ---------------- offline maps (offmap.js) ---------------- */
+    @JavascriptInterface
+    public void mapIndex(String id) { maps.index(id); }
+
+    @JavascriptInterface
+    public void mapDownload(String id, String name) { maps.download(id, name); }
+
+    @JavascriptInterface
+    public void mapDelete(String name) { maps.delete(name); }
 
     /** Ask again for the fast link (the web app does this if it measures the link slowing down mid-drive). */
     @JavascriptInterface

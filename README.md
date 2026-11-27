@@ -128,6 +128,16 @@ Traffic lights and zebra crossings come from the same map download. They're draw
 
 **Remembered map areas:** every map download is kept on the phone for 30 days (the newest 250 areas, each 100–300 kB). Driving the same roads again, like a commute, loads them from the phone instead of the map servers, so the road shape still shows when the servers are busy or there's no signal. If both servers fail, the app tries again after 10 s, then 20 s, 40 s and at most a minute. The saved areas show which roads you've driven, stay on this phone only, and aren't part of a backup; **Forget saved map areas** in Settings → Drive screen clears them.
 
+## Offline maps (Android app → Settings → Drive screen)
+
+Download the counties you drive in (England by county, plus Scotland and Wales), and their roads load from the phone instead of the map servers: nothing is sent, it works with no signal, and it doesn't depend on the servers being up. Outside the downloaded counties the map servers are used as before, unless **Only use offline maps** is on.
+
+- **Where they come from:** a GitHub job (`.github/workflows/maps.yml`, `maptools/`) rebuilds them every Monday from OpenStreetMap (via Geofabrik), keeping only what the Drive screen draws: roads with their names, numbers, speed limits and lanes, plus traffic lights, crossings, mini-roundabouts and cameras. They're published on this repo's **Offline maps** release. Each county is a few MB.
+- **Updating:** the list in Settings shows when a newer copy is available. Map fixes made on OpenStreetMap reach the packs within a week.
+- **Website:** can't download them (GitHub doesn't let other sites fetch release files), so it keeps using the map servers.
+- **Privacy:** downloading a county tells GitHub which county; your position is never sent.
+- **Licence:** map data © OpenStreetMap contributors, under the [ODbL](https://www.openstreetmap.org/copyright). The packs are published under the same licence.
+
 ## Alerts and driving aids (Settings → Alerts and driving aids)
 
 - **Gentle alerts:** one quiet line under the power bar, never a pop-up. It shows for a tyre that's low or well below the others, a hot battery (45°C and up), one cell drifting from the rest at rest, or a low 12 V battery. Each has to stay true for a while first, and a dismissed alert stays away until the problem clears.
@@ -269,6 +279,8 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `scenery.js` | Roadside scenery on the Drive screen |
 | `tests/` | Automated checks for contributors (not part of the app): see `tests/README.md` |
 | `replay.js` | Drive replay: plays a recording back in Demo mode |
+| `offmap.js` | Offline maps: county packs downloaded in the Android app, stored on the phone, roads loaded from them |
+| `maptools/` | Builds the offline map packs from OpenStreetMap (run weekly by GitHub Actions) |
 | `driverec.js` | Drive recorder: everything on a drive, into one file |
 | `history.js` | Recent efficiency and range, charge log and costs, battery health trend |
 | `alerts.js` | Gentle alerts, spoken updates, night dimming, speed limit nudge |

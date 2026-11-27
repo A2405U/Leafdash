@@ -42,7 +42,7 @@ module.exports = async ({ browser, base, assert, note }) => {
   await page.goto(base); await sleep(1200);
   const up = await page.evaluate(async () => ({ old: await htRawGet('123'), stores: [...(await htDb()).objectStoreNames].sort() }));
   assert.strictEqual(up.old, 'old log', 'old health trip log lost in the upgrade');
-  assert.deepStrictEqual(up.stores, ['driverec', 'healthraw', 'osmcache'], 'database stores after the upgrade');
+  assert.deepStrictEqual(up.stores, ['driverec', 'healthraw', 'offmap', 'osmcache'], 'database stores after the upgrade');
   note(`${urls.length} pages × ${Object.keys(sizes).length} sizes, database upgrade`);
   await ctx.close();
 };

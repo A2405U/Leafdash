@@ -1,0 +1,52 @@
+# Builds the offline map packs (maptools/) and publishes them on the "maps" release, where the Android app
+# downloads them. Runs every Monday, or by hand from the Actions tab. A push to a claude/ branch that changes
+# maptools/ only builds Rutland, as a check, and attaches it to the run instead of publishing.
+#
+# Map data © OpenStreetMap contributors, from Geofabrik. The packs are published under the ODbL.
+name: Offline maps
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths: ['maptools/**', '.github/workflows/maps.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write          # to publish the release (main only)
+    env:
+      TEST: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+          pip install --quiet osmium
+      - name: Build the packs
+        run: OUT=packs WORK=$RUNNER_TEMP/work maptools/build_all.sh
+      - name: Attach (test build)
+        if: env.TEST == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: leafdash-map-test
+          path: packs/
+          retention-days: 7
+      - name: Publish on the "maps" release
+        if: env.TEST != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="Offline map packs for Leaf Dash (Android app → Settings → Drive screen → Offline maps). Rebuilt every Monday.
+
+          Map data © OpenStreetMap contributors, available under the Open Database License (ODbL): https://www.openstreetmap.org/copyright. These packs are derived databases and are published under the ODbL. Source extracts: Geofabrik (download.geofabrik.de)."
+          gh release view maps >/dev/null 2>&1 || gh release create maps --title "Offline maps" --notes "$notes" --latest=false
+          gh release edit maps --notes "$notes" --latest=false
+          gh release upload maps packs/*.ldmap packs/index.json --clobber

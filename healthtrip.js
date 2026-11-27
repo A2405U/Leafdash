@@ -31,8 +31,8 @@ function htTripsSave(list) {
    installed app) needs to upgrade it, and says so if an upgrade is held up by a copy that's still open. */
 let HTDB = null;
 const htDb = () => HTDB ||= new Promise((res, rej) => {
-  const r = indexedDB.open('leafdash', 3);   // 2 added the drive recorder's store, 3 the remembered map areas
-  r.onupgradeneeded = () => { for (const st of ['healthraw', 'driverec', 'osmcache']) if (!r.result.objectStoreNames.contains(st)) r.result.createObjectStore(st); };
+  const r = indexedDB.open('leafdash', 4);   // 2 added the drive recorder's store, 3 the remembered map areas, 4 offline maps
+  r.onupgradeneeded = () => { for (const st of ['healthraw', 'driverec', 'osmcache', 'offmap']) if (!r.result.objectStoreNames.contains(st)) r.result.createObjectStore(st); };
   r.onblocked = () => { if (typeof log === 'function') log('Storage upgrade is waiting: close any other Leaf Dash tabs or windows'); };
   r.onsuccess = () => { const db = r.result; db.onversionchange = () => { db.close(); HTDB = null; }; db.onclose = () => { HTDB = null; }; res(db); };
   r.onerror = () => { HTDB = null; rej(r.error); };

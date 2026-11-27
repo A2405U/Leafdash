@@ -23,7 +23,7 @@
 <body>
 <main>
   <h1>Leaf Dash privacy policy</h1>
-  <p class="mini">Applies to the Leaf Dash Android app and the Leaf Dash website. Last updated 27 November 2026.</p>
+  <p class="mini">Applies to the Leaf Dash Android app and the Leaf Dash website. Last updated 27 November 2026 (offline maps added).</p>
 
   <h2>In short</h2>
   <p>Leaf Dash has no accounts, no analytics, no adverts and no crash reports, and its developer runs no servers. Everything it reads from your car stays on your phone, unless you switch on an add-on that sends it somewhere you choose. The car's VIN is never sent anywhere.</p>
@@ -36,6 +36,7 @@
     <tr><th>What</th><th>Where to</th><th>When</th></tr>
     <tr><td>Your rough position: which block of about 220 × 140 m you're in, never the exact spot</td><td>Two public OpenStreetMap map servers (overpass-api.de and overpass.kumi.systems), to download the roads around you</td><td>Only if you switch on real road shape (Settings → Drive screen), after a confirmation. Areas you've driven before are loaded from the phone instead.</td></tr>
     <tr><td>Car readings you choose, and your location only if you allow it for that add-on</td><td>Your own Home Assistant, your own MQTT broker, or A Better Route Planner (ABRP)</td><td>Only for add-ons you switch on (Settings → Add-ons), each after a confirmation. Never in Demo mode.</td></tr>
+    <tr><td>Which counties' offline maps you download (Android app)</td><td>GitHub, where the map packs are published</td><td>Only when you tap Download in Settings → Drive screen → Offline maps. Your position isn't sent. Inside a downloaded county, nothing is sent to the map servers at all.</td></tr>
     <tr><td>Files such as recordings, reports, scans and backups</td><td>Wherever you send or save them</td><td>Only when you tap Share or Save</td></tr>
   </table>
   <p>Those services have their own privacy policies. The map servers see your phone's internet address, as any website does.</p>

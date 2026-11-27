@@ -99,6 +99,12 @@ function openSettings(section) {
         <p class="hint">Uses GPS and a little mobile data. Falls back to the straight road when there's no GPS or map data. Map areas you've driven are kept on this phone for 30 days, so the same roads load without downloading again.</p>
         <p class="hint"><button class="btn ghost small" data-osmc-clear>Forget saved map areas</button> <span data-osmc-n></span></p>
       </div>
+      <div class="set-group"><div class="label">Offline maps</div>
+        ${offmapCanDownload() ? `<p class="hint">Download the counties you drive in, and their roads load from the phone: no map server, nothing sent, works with no signal. They're used when Real road shape (above) is on. <span data-off-n></span></p>
+        <p class="hint"><button class="btn ghost small" data-off-open>Choose counties…</button></p>
+        <label class="switch-row"><span>Only use offline maps (never ask the map servers)</span><input type="checkbox" data-sw="offlineOnly" ${SET.offlineOnly ? 'checked' : ''}></label>`
+        : `<p class="hint">In the Leaf Dash Android app you can download county maps, so roads load from the phone without the map servers. The website can't download them. <span data-off-n></span></p>`}
+      </div>
       <div class="set-group"><div class="label">Scenery</div>
         <label class="switch-row"><span>Trees, hedges, houses and lamp posts beside the road</span><input type="checkbox" data-sw="scenery" ${SET.scenery !== false ? 'checked' : ''}></label>
         <p class="hint">Drawn by the app to suit the road (town, countryside or fast road); nothing extra is downloaded.</p>
@@ -238,6 +244,8 @@ function openSettings(section) {
   const osmcShow = () => osmcCount().then(n => { const el = box.querySelector('[data-osmc-n]'); if (el) el.textContent = n ? `${n} saved` : 'none saved'; });
   if (typeof osmcCount === 'function') osmcShow();
   box.querySelector('[data-osmc-clear]')?.addEventListener('click', async () => { await osmcClear(); osmcShow(); });
+  if (typeof offmapSummary === 'function') offmapSummary();
+  box.querySelector('[data-off-open]')?.addEventListener('click', () => offmapSheet());
   box.querySelector('[data-night]').onchange = e => { SET.nightDim = e.target.checked ? 'auto' : 'off'; saveSettings(); };
   box.querySelector('[data-a=testVoice]').onclick = () => {
     if (!window.speechSynthesis) return alert('This browser has no built-in voice.');

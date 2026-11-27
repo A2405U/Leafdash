@@ -130,6 +130,11 @@ async function osmFetch(lat, lon) {
   if (OSM.fixture || OSM.busy) return;
   if (OSM.fetchAt && metres(OSM.fetchAt, { lat, lon }) < 300 && OSM.ways.size) return;
   OSM.busy = true;
+  // downloaded counties (offline maps, Android app): straight from the phone, nothing sent
+  try {
+    const covered = typeof offmapLoadNear === 'function' && await offmapLoadNear(lat, lon);
+    if (covered || SET.offlineOnly) { OSM.fetchAt = { lat, lon }; OSM.status = covered ? '' : 'outside offline maps'; OSM.busy = false; return; }
+  } catch (e) { log('Offline map: ' + (e?.message || e)); }
   // roads driven before: from the phone, no download (also while waiting to retry after a server error)
   try {
     const hit = await osmcLoadNear(lat, lon);
