@@ -641,23 +641,24 @@ body.car-screen {
 .car-screen .ps-scale, .car-screen .tabs button[data-view="debug"] { display: none !important; }
 
 /* power: the reading on the left, the bar filling the rest of the row */
-.car-screen .powerstrip { position: static; display: flex; align-items: center; gap: 16px; margin: 0 0 6px 58px; padding: 4px 4px 6px; border: 0; background: none; }
+.car-screen .powerstrip { position: static; display: flex; align-items: center; gap: 14px; margin: 0 0 6px 56px; padding: 6px 6px 6px; border: 0; background: none; }
 .car-screen .ps-row { margin: 0; flex: none; min-width: 6.2ch; }
-.car-screen .ps-kw { font-size: 34px; line-height: 1; }
-.car-screen .ps-kw small { font-size: 15px; }
-.car-screen .ps-bar { flex: 1; height: 12px; }
-.car-screen .ps-zero { top: -6px; bottom: -6px; width: 3px; }
+.car-screen .ps-kw { font-size: 28px; line-height: 1; }
+.car-screen .ps-kw small { font-size: 13px; }
+.car-screen .ps-bar { flex: 1; height: 8px; }
+.car-screen .ps-zero { top: -5px; bottom: -5px; width: 2px; }
 
 /* the drive scene fills the rest; speed and gear sized to the screen's height */
 .car-screen main { margin: 0; }
 .car-screen .scene { border-radius: 16px; }
 .car-screen .speed { top: 10px; right: 16px; }
-.car-screen .speed span { font-size: clamp(56px, 24vh, 140px); }
-.car-screen .speed small { font-size: clamp(16px, 5vh, 26px); }
-.car-screen .spd-src { font-size: 13px; }
-.car-screen .gear-big { top: 12px; left: 16px; font-size: clamp(48px, 20vh, 110px); }
-.car-screen .drive-tag { top: auto; bottom: 14px; left: 16px; font-size: 14px; }
-.car-screen #epedalTag { bottom: 46px; }
+.car-screen .speed span { font-size: clamp(44px, 17vh, 100px); }
+.car-screen .speed small { font-size: clamp(14px, 4vh, 22px); }
+.car-screen .spd-src { font-size: 12px; }
+.car-screen .gear-big { top: 12px; left: 16px; font-size: clamp(36px, 13vh, 76px); }
+/* ECO and e-Pedal sit under the gear letter */
+.car-screen .drive-tag { top: calc(clamp(36px, 13vh, 76px) + 22px); bottom: auto; left: 16px; font-size: 13px; }
+.car-screen #epedalTag { top: calc(clamp(36px, 13vh, 76px) + 54px); }
 .car-screen .road-name { font-size: 17px; }
 .car-screen .road-sign { transform: scale(1.25); transform-origin: top right; }
 .car-screen .road-next { font-size: 15px; }
@@ -667,14 +668,14 @@ body.car-screen {
 .car-menu-btn { display: none; }
 .car-screen .car-menu-btn {
   display: flex; flex-direction: column; justify-content: center; gap: 6px; position: fixed; z-index: 30;
-  top: calc(var(--car-t, 0px) + 6px); left: calc(var(--car-l, 0px) + 8px); width: 48px; height: 48px; padding: 0 12px;
+  top: calc(var(--car-t, 0px) + 6px); left: calc(var(--car-l, 0px) + 8px); width: 44px; height: 44px; padding: 0 11px;
   border: 0; border-radius: 14px; background: var(--card);
 }
 .car-screen .car-menu-btn i { display: block; height: 3px; border-radius: 2px; background: var(--text); }
 .car-screen .tabs { display: none; }
 .car-screen.car-menu .tabs {
   display: flex; flex-direction: column; gap: 6px; position: fixed; z-index: 29; transform: none;
-  top: calc(var(--car-t, 0px) + 62px); left: calc(var(--car-l, 0px) + 8px); bottom: auto; right: auto; width: 150px;
+  top: calc(var(--car-t, 0px) + 58px); left: calc(var(--car-l, 0px) + 8px); bottom: auto; right: auto; width: 150px;
   padding: 8px; border: 1px solid var(--line); border-radius: 18px; background: rgba(11,15,20,.96);
 }
 .car-screen.car-menu .tabs button { max-width: none; padding: 14px 10px; font-size: 18px; }
