@@ -26,7 +26,7 @@ Then, in the `play` environment, **Add environment secret** four times:
 |---|---|
 | `UPLOAD_KEYSTORE_B64` | the key file as text: run `base64 -w0 leafdash-upload.jks` and paste the output |
 | `UPLOAD_STORE_PASSWORD` | the password you chose |
-| `UPLOAD_KEY_ALIAS` | `upload` |
+| `UPLOAD_KEY_ALIAS` | `upload` (optional: if the file has only one key, that one is used) |
 | `UPLOAD_KEY_PASSWORD` | the same password (keytool uses one password for both unless you chose two) |
 
 Or with the GitHub CLI, from the folder with the key (it asks for each value, so nothing ends up in your shell history):
