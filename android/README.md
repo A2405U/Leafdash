@@ -1,4 +1,4 @@
-# Leaf Dash for Android (beta)
+# Leaf Dash for Android
 
 The Leaf Dash web app packed into a real Android app. The screens are the same as the website's, and the web files are built into the app, so it starts without a network connection.
 
@@ -17,11 +17,11 @@ To get the app file: GitHub → **Actions** → the latest **Android app** run �
 
 1. Copy `app-debug.apk` to the phone and open it, or use `adb install -r app-debug.apk` from a computer. Android asks you to allow installs from that app the first time.
 2. If the older **Leaf Dash Test** app is installed, you can uninstall it. The new app has a different name inside Android (`com.a2405.leafdash`), so the two don't replace each other.
-3. Open **Leaf Dash (beta)** and tap **Connect adapter**. Android asks for **Nearby devices** permission (for Bluetooth), then lists the adapters it can see. Location is asked for the first time the Drive screen wants it.
+3. Open **Leaf Dash** and tap **Connect adapter**. Android asks for **Nearby devices** permission (for Bluetooth), then lists the adapters it can see. Location is asked for the first time the Drive screen wants it.
 
 **Your data doesn't move by itself.** The app keeps its settings, history and recordings separately from Chrome. To bring them over: in Chrome, Settings → Your data → **Save backup file**; then in the app, **Restore from file**.
 
-**When it moves to Google Play,** that version is signed with a different key, so it can't install over this test build. Save a backup file first, uninstall the test build, install from Play, then restore.
+**Google Play:** see [`PLAY.md`](PLAY.md) for the upload key, the release workflow and the Play Console steps. **When you move to the Play version,** that version is signed with a different key, so it can't install over this test build. Save a backup file first, uninstall the test build, install from Play, then restore.
 
 ## Android Auto: what you need
 
@@ -62,7 +62,7 @@ adb forward tcp:5277 tcp:5277
 
 (On Windows it's `desktop-head-unit.exe`.)
 
-4. An Android Auto screen appears on the computer. Open its app launcher and choose **Leaf Dash (beta)**.
+4. An Android Auto screen appears on the computer. Open its app launcher and choose **Leaf Dash**.
 
 **What to look for:** the Leaf Dash Drive screen, with the road moving, on the simulated car display.
 

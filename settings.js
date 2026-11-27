@@ -99,6 +99,12 @@ function openSettings(section) {
         <p class="hint">Uses GPS and a little mobile data. Falls back to the straight road when there's no GPS or map data. Map areas you've driven are kept on this phone for 30 days, so the same roads load without downloading again.</p>
         <p class="hint"><button class="btn ghost small" data-osmc-clear>Forget saved map areas</button> <span data-osmc-n></span></p>
       </div>
+      <div class="set-group"><div class="label">Offline maps</div>
+        ${offmapCanDownload() ? `<p class="hint">Download the counties you drive in, and their roads load from the phone: no map server, nothing sent, works with no signal. They're used when Real road shape (above) is on. <span data-off-n></span></p>
+        <p class="hint"><button class="btn ghost small" data-off-open>Choose counties…</button></p>
+        <label class="switch-row"><span>Only use offline maps (never ask the map servers)</span><input type="checkbox" data-sw="offlineOnly" ${SET.offlineOnly ? 'checked' : ''}></label>`
+        : `<p class="hint">In the Leaf Dash Android app you can download county maps, so roads load from the phone without the map servers. The website can't download them. <span data-off-n></span></p>`}
+      </div>
       <div class="set-group"><div class="label">Scenery</div>
         <label class="switch-row"><span>Trees, hedges, houses and lamp posts beside the road</span><input type="checkbox" data-sw="scenery" ${SET.scenery !== false ? 'checked' : ''}></label>
         <p class="hint">Drawn by the app to suit the road (town, countryside or fast road); nothing extra is downloaded.</p>
@@ -189,7 +195,7 @@ function openSettings(section) {
     <details class="set-sec" data-sec="about" name="ldset">
       <summary><span class="ss-title">About</span><span class="ss-sub" data-sub="about"></span></summary>
       <div class="ss-body">
-      <p class="hint">Leaf Dash ${LeafDash.version}. <b>Read-only by design:</b> the app can only send adapter set-up commands and read requests (21 xx / 22 xx xx). Anything that could change the car is blocked before it reaches the adapter, with no override. Settings and any add-on credentials are stored only in this browser. What leaves this phone is listed in Your data.</p>
+      <p class="hint">Leaf Dash ${LeafDash.version}. <b>Read-only by design:</b> the app can only send adapter set-up commands and read requests (21 xx / 22 xx xx). Anything that could change the car is blocked before it reaches the adapter, with no override. Settings and any add-on credentials are stored only in this browser. What leaves this phone is listed in Your data, and in the <a href="https://a2405u.github.io/Leafdash/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</p>
       <p class="hint">Don't use your phone while driving. Settings and the Debug tab lock while the car is moving.</p>
       <p class="hint">Copyright (C) 2026 A2405U and contributors. Free software under the GNU GPL v3.0, with no warranty. Not affiliated with Nissan; Nissan and Leaf are trademarks of Nissan.</p>
       </div>
@@ -238,6 +244,8 @@ function openSettings(section) {
   const osmcShow = () => osmcCount().then(n => { const el = box.querySelector('[data-osmc-n]'); if (el) el.textContent = n ? `${n} saved` : 'none saved'; });
   if (typeof osmcCount === 'function') osmcShow();
   box.querySelector('[data-osmc-clear]')?.addEventListener('click', async () => { await osmcClear(); osmcShow(); });
+  if (typeof offmapSummary === 'function') offmapSummary();
+  box.querySelector('[data-off-open]')?.addEventListener('click', () => offmapSheet());
   box.querySelector('[data-night]').onchange = e => { SET.nightDim = e.target.checked ? 'auto' : 'off'; saveSettings(); };
   box.querySelector('[data-a=testVoice]').onclick = () => {
     if (!window.speechSynthesis) return alert('This browser has no built-in voice.');

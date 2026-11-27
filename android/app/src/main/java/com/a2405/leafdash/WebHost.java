@@ -46,9 +46,15 @@ final class WebHost {
      */
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     static WebView create(@NonNull Context context, @NonNull String query, boolean carScreen, @Nullable Object bridge) {
-        final WebViewAssetLoader assets = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(context))
-                .build();
+        WebViewAssetLoader.Builder loader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(context));
+        if (bridge != null) {      // downloaded offline map packs (MapDownloads), for offmap.js to read
+            java.io.File maps = MapDownloads.dir(context);
+            //noinspection ResultOfMethodCallIgnored
+            maps.mkdirs();
+            loader.addPathHandler("/" + MapDownloads.DIR + "/", new WebViewAssetLoader.InternalStoragePathHandler(context, maps));
+        }
+        final WebViewAssetLoader assets = loader.build();
 
         WebView web = new WebView(context);
         web.setBackgroundColor(Color.BLACK);

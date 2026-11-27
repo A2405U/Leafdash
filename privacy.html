@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Leaf Dash privacy policy</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0f14; color: #e6edf3; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 28px 16px 60px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 28px 0 8px; color: #9fe3b0; }
+  p, li { color: #c9d4de; }
+  .mini { color: #8b98a5; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #1f2a35; overflow-wrap: anywhere; }
+  th { color: #8b98a5; font-weight: 600; }
+  a { color: #7cc4ff; }
+  code { background: #15202b; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Leaf Dash privacy policy</h1>
+  <p class="mini">Applies to the Leaf Dash Android app and the Leaf Dash website. Last updated 27 November 2026 (offline maps added).</p>
+
+  <h2>In short</h2>
+  <p>Leaf Dash has no accounts, no analytics, no adverts and no crash reports, and its developer runs no servers. Everything it reads from your car stays on your phone, unless you switch on an add-on that sends it somewhere you choose. The car's VIN is never sent anywhere.</p>
+
+  <h2>What stays on your phone</h2>
+  <p>Car readings, trip and charging history, battery health readings, settings, saved map areas, drive recordings and health trip reports are stored only on your phone, in the app's own storage. Uninstalling the app deletes them. You can save a backup file yourself (Settings → Your data); where it goes is up to you.</p>
+
+  <h2>What can leave your phone</h2>
+  <table>
+    <tr><th>What</th><th>Where to</th><th>When</th></tr>
+    <tr><td>Your rough position: which block of about 220 × 140 m you're in, never the exact spot</td><td>Two public OpenStreetMap map servers (overpass-api.de and overpass.kumi.systems), to download the roads around you</td><td>Only if you switch on real road shape (Settings → Drive screen), after a confirmation. Areas you've driven before are loaded from the phone instead.</td></tr>
+    <tr><td>Car readings you choose, and your location only if you allow it for that add-on</td><td>Your own Home Assistant, your own MQTT broker, or A Better Route Planner (ABRP)</td><td>Only for add-ons you switch on (Settings → Add-ons), each after a confirmation. Never in Demo mode.</td></tr>
+    <tr><td>Which counties' offline maps you download (Android app)</td><td>GitHub, where the map packs are published</td><td>Only when you tap Download in Settings → Drive screen → Offline maps. Your position isn't sent. Inside a downloaded county, nothing is sent to the map servers at all.</td></tr>
+    <tr><td>Files such as recordings, reports, scans and backups</td><td>Wherever you send or save them</td><td>Only when you tap Share or Save</td></tr>
+  </table>
+  <p>Those services have their own privacy policies. The map servers see your phone's internet address, as any website does.</p>
+
+  <h2>Permissions the Android app asks for</h2>
+  <ul>
+    <li><b>Nearby devices (Bluetooth):</b> to find and connect to your OBD adapter. It isn't used to work out where you are.</li>
+    <li><b>Location:</b> so the Drive screen can follow the road you're on. It's asked for the first time the Drive screen needs it.</li>
+    <li><b>Internet:</b> for map data and the add-ons above.</li>
+  </ul>
+
+  <h2>Your phone's own services</h2>
+  <p>Android provides the GPS position, and spoken updates use the phone's text-to-speech engine. These are covered by your phone's own privacy settings.</p>
+
+  <h2>Children</h2>
+  <p>Leaf Dash is a tool for drivers and isn't aimed at children.</p>
+
+  <h2>Changes and contact</h2>
+  <p>If this policy changes, the new version is published at this address. Questions or concerns: open an issue on the project's GitHub page, <a href="https://github.com/A2405U/Leafdash">github.com/A2405U/Leafdash</a>, or for security problems use <b>Report a vulnerability</b> on its Security tab.</p>
+</main>
+</body>
+</html>
