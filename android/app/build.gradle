@@ -32,7 +32,7 @@ android {
             upload {
                 storeFile file(System.getenv('UPLOAD_KEYSTORE'))
                 storePassword System.getenv('UPLOAD_STORE_PASSWORD')
-                keyAlias System.getenv('UPLOAD_KEY_ALIAS')
+                keyAlias System.getenv('UPLOAD_KEY_ALIAS').trim()   // a pasted secret can end in a line break
                 keyPassword System.getenv('UPLOAD_KEY_PASSWORD')
             }
         }
