@@ -4,7 +4,7 @@ The Leaf Dash web app packed into a real Android app. The screens are the same a
 
 - **The phone screen** is the full Leaf Dash. It connects to the OBD adapter through the phone's own Bluetooth, because Android's WebView has no Web Bluetooth. `leafnative.js` gives the web code the browser features it expects (Bluetooth, keeping the screen on, spoken updates, sharing and saving files), using `NativeBridge.java`.
 - **Read-only, twice.** The web app refuses anything that isn't read-only (`isReadOnly()` in `app.js`). `ReadOnlyGuard.java` checks every command again just before it's written to the adapter, with the same list. `tests/native.test.js` checks that the two lists match.
-- **The car screen** (Android Auto) still shows Demo mode only.
+- **The car screen** (Android Auto) shows the Drive screen with the phone's live values (`CarLink.java`, `carscreen.js`). Android Auto's ☰ button opens the menu; taps on the screen are passed on where the car supports it.
 - **Not published on the website:** `android` is excluded in `_config.yml`.
 
 ## How it's built

@@ -204,6 +204,13 @@ final class NativeBridge implements BleLink.Listener {
     @JavascriptInterface
     public void bleDisconnect() { link.disconnect(); }
 
+    /* ---------------- the car screen (carscreen.js, CarLink) ---------------- */
+    @JavascriptInterface
+    public boolean carOn() { return CarLink.showing(); }
+
+    @JavascriptInterface
+    public void toCar(String json) { CarLink.send(json); }
+
     /* ---------------- offline maps (offmap.js) ---------------- */
     @JavascriptInterface
     public void mapIndex(String id) { maps.index(id); }

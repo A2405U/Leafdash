@@ -203,6 +203,6 @@ function demoRouteApply(d) {
 }
 
 LeafDash.on('mode', m => {
-  if (m === 'demo' && SET.demoRoute !== false && !S.demoCharging && !S.replay) drtStart();   // a replay brings its own road
+  if (m === 'demo' && SET.demoRoute !== false && !S.demoCharging && !S.replay && !S.mirror) drtStart();   // a replay brings its own road; the car screen follows the phone
   if (m !== 'demo') drtStop();
 });

@@ -53,7 +53,7 @@ function haversine(a, b, c, d) {
 /** Current speed in m/s and its source, or nulls. */
 function currentSpeed() {
   const d = S.data;
-  if (d.speed != null) return { mps: d.speed / 3.6, src: S.mode === 'demo' ? 'demo' : 'car' };
+  if (d.speed != null) return { mps: d.speed / 3.6, src: S.mode === 'demo' && !S.mirror ? 'demo' : 'car' };
   if (SPD.mps != null && Date.now() - SPD.at < 5000) return { mps: SPD.mps, src: 'GPS' };
   return { mps: null, src: null };
 }
@@ -70,8 +70,11 @@ function fitScene() {
   const tabs = document.querySelector('.tabs');
   const rail = getComputedStyle(tabs).flexDirection === 'column';
   // bottom bar (phone) or floating pill (tablet): stop above it; side rail: use the full height
-  const bottomLimit = rail ? window.innerHeight : tabs.getBoundingClientRect().top + window.scrollY;
-  const minH = window.innerHeight < 520 ? 220 : 380;
+  // the car screen: down to the top of Android Auto's bottom bar (--car-b), with no tabs below
+  const car = document.body.classList.contains('car-screen');
+  const carB = car ? (parseFloat(getComputedStyle(document.body).getPropertyValue('--car-b')) || 0) + 6 : 0;
+  const bottomLimit = car ? window.innerHeight - carB + 6 : rail ? window.innerHeight : tabs.getBoundingClientRect().top + window.scrollY;
+  const minH = car ? 150 : window.innerHeight < 520 ? 220 : 380;
   el.style.height = Math.max(minH, bottomLimit - top - 12) + 'px';
 }
 window.addEventListener('resize', fitScene);

@@ -25,6 +25,7 @@ They need [Playwright](https://playwright.dev) with Chromium: `npm install playw
 | `demo` | The Demo test panel: jumping to each feature, 4×, losing GPS, slow link, drop-out, alerts, the driving lock, the note, the Car tab. |
 | `cameras` | Every common camera tagging is recognised; each demo-route camera shows ahead (over its lights); the switch hides them. |
 | `native` | The Android app's Bluetooth bridge (`leafnative.js`) on a stand-in for the Java side: the two read-only lists match, connecting, a write refused by the native guard, voice, saving a file, reconnecting and connecting by itself. |
+| `carscreen` | The Android Auto car screen: the message with no phone, its own Demo, the phone's live values, the ☰ menu without Debug, Android Auto's bar kept clear, nothing saved, and the phone sending values (never the cells), its mode and a heartbeat. |
 | `offmap` | Offline maps: choosing and downloading a county (a stand-in for the Android download), unpacking it, the road, lights and camera loading with no map-server requests, the servers used outside it but never with "Only use offline maps", and removing it. |
 
 `mock-adapter.js` is a fake LELink² that answers like the car and records every command. Set `window.__lat` (ms per reply)
