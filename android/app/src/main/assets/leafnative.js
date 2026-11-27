@@ -85,8 +85,9 @@
   class Server {
     constructor(device) { this.device = device; this.connected = false; this._services = []; }
     async connect() {
-      const json = await call('bleConnect', this.device.id);
-      this._services = JSON.parse(json || '[]');
+      const got = JSON.parse(await call('bleConnect', this.device.id) || '{}');
+      this._services = Array.isArray(got) ? got : got.services || [];
+      this.fastLink = !!got.fastLink;                         // the phone was asked for its fastest Bluetooth link
       this.connected = true; current = this.device; chars.clear();
       return this;
     }
@@ -122,6 +123,8 @@
   };
 
   const bluetooth = {
+    native: true,
+    fastLink: () => { try { return !!N.bleFastLink(); } catch { return false; } },   // ask again (app.js, when the link slows)
     async getAvailability() { return true; },
     async requestDevice() { return Device.of(JSON.parse(await call('bleScan'))); },
     async getDevices() { return JSON.parse(await call('bleRemembered')).map(Device.of); },

@@ -62,6 +62,15 @@ final class BleLink {
         if (gatt == null) { pendingConnect = null; result.done(false, "Could not start the Bluetooth connection"); }
     }
 
+    /**
+     * Ask Android for its fastest link (a connection interval of about 11–15 ms instead of up to 120 ms or more).
+     * Each command and its reply take about two of these turns, so this sets how fast the adapter can answer.
+     * Chrome can't ask for this, which is why the website is sometimes slow (issue #23). Harmless to repeat.
+     */
+    synchronized boolean fastLink() {
+        return gatt != null && gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
+    }
+
     synchronized void disconnect() {
         if (gatt != null) gatt.disconnect();
     }
@@ -188,7 +197,11 @@ final class BleLink {
             synchronized (BleLink.this) {
                 r = pendingConnect; pendingConnect = null;
                 if (r == null) return;
-                if (status == BluetoothGatt.GATT_SUCCESS) { try { json = describe(g); } catch (JSONException ignored) { } }
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    boolean fast = fastLink();
+                    try { json = new JSONObject().put("services", new JSONArray(describe(g))).put("fastLink", fast).toString(); }
+                    catch (JSONException ignored) { }
+                }
             }
             if (json != null) r.done(true, json); else r.done(false, "Could not read the adapter's services");
         }

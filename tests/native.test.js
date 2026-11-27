@@ -6,7 +6,8 @@
      • the two read-only lists (app.js and ReadOnlyGuard.java) are the same
      • connecting, live values, a dropped link reconnecting, and connecting by itself when the app opens
      • a write command sent straight to the characteristic (past isReadOnly) is still stopped by the native guard
-     • screen kept on, spoken updates and saving a backup file go to the phone */
+     • screen kept on, spoken updates and saving a backup file go to the phone
+     • the fast Bluetooth link is asked for on connect, and again when the link slows down (issue #23) */
 const fs = require('fs'), path = require('path');
 const { MOCK } = require('./mock-adapter.js');
 const { sleep, until } = require('./helpers.js');
@@ -36,7 +37,7 @@ function FAKE_NATIVE(guard) {
     if (c.startsWith('AT')) return guard.at.some(p => new RegExp('^' + p + '$').test(c));
     return guard.other.some(p => new RegExp('^' + p + '$').test(c));
   };
-  const N = window.__native = { awake: false, spoken: [], saved: [], blocked: [], connects: 0 };
+  const N = window.__native = { awake: false, spoken: [], saved: [], blocked: [], connects: 0, fastAsked: 0 };
   const reply = (id, ok, data = '') => setTimeout(() => window.__leafNativeCb(id, ok, data), 5);
   const b64 = bytes => { let s = ''; for (const x of bytes) s += String.fromCharCode(x); return btoa(s); };
   let ch = null, held = '';
@@ -49,7 +50,7 @@ function FAKE_NATIVE(guard) {
       ch = (await svc.getCharacteristics())[0];
       ch.addEventListener('characteristicvaluechanged', e => window.__leafNativeNotify(SVC, CH, b64(new Uint8Array(e.target.value.buffer))));
       localStorage.setItem('__nativeRemembers', '1');
-      reply(id, true, JSON.stringify([{ uuid: SVC, chars: [{ uuid: CH, props: { read: false, write: true, writeWithoutResponse: true, notify: true, indicate: false } }] }]));
+      reply(id, true, JSON.stringify({ fastLink: true, services: [{ uuid: SVC, chars: [{ uuid: CH, props: { read: false, write: true, writeWithoutResponse: true, notify: true, indicate: false } }] }] }));
     },
     bleNotify: id => reply(id, true),
     bleWrite: (id, s, c, data) => {
@@ -63,6 +64,7 @@ function FAKE_NATIVE(guard) {
       reply(id, true);
     },
     bleDisconnect: () => setTimeout(() => window.__leafNativeDisconnected(), 5),
+    bleFastLink: () => { N.fastAsked++; return true; },
     keepAwake: on => { N.awake = on; },
     speak: text => N.spoken.push(text),
     stopSpeaking: () => {},
@@ -109,6 +111,13 @@ module.exports = async ({ browser, base, assert, note }) => {
   });
   assert.ok(/Blocked/.test(direct.err) && !direct.reached && direct.blocked.includes('2E123400'), `native guard: ${JSON.stringify(direct)}`);
 
+  // the fast link: asked for on connect (logged), and again once the link slows down
+  assert.ok(await page.evaluate(() => logLines.some(l => /Asked the phone for a fast Bluetooth link/.test(l))), 'fast link not asked for on connect');
+  await page.evaluate(() => { window.__lat = 250; });
+  const again = await until(page, () => window.__native.fastAsked > 0 && logLines.some(l => /asking the phone for a fast link again/.test(l)), 20000);
+  assert.ok(again, 'fast link not asked for again when the link slowed down');
+  await page.evaluate(() => { window.__lat = 30; });
+
   // spoken update and a backup file
   await page.evaluate(() => { say('Battery at 50%', true); bkSave(false); });
   const files = await until(page, () => window.__native.saved.length && window.__native);
@@ -129,6 +138,6 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(auto, 'did not connect by itself when the app opened');
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; voice, backup file, reconnect and auto-connect work`);
+  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; voice, backup file, reconnect and auto-connect work`);
   await ctx.close();
 };
