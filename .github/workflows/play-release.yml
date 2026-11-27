@@ -37,6 +37,19 @@ jobs:
         run: |
           if [ -z "$UPLOAD_KEYSTORE_B64" ]; then echo "::error::The UPLOAD_KEYSTORE_B64 secret isn't set"; exit 1; fi
           echo "$UPLOAD_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+      - name: Check the key file and its alias
+        env:
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+        run: |
+          alias=$(printf '%s' "$UPLOAD_KEY_ALIAS" | tr -d '[:space:]')
+          found=$(keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$UPLOAD_STORE_PASSWORD" 2>&1 | sed -n 's/^\([^,]*\), .*PrivateKeyEntry.*/\1/p')
+          if [ -z "$found" ]; then echo "::error::Couldn't open the key file: check UPLOAD_KEYSTORE_B64 and UPLOAD_STORE_PASSWORD"; exit 1; fi
+          if ! printf '%s\n' "$found" | grep -qixF -- "$alias"; then
+            echo "::error::The key file has no key called what UPLOAD_KEY_ALIAS says. Keys in the file: $(echo $found | tr '\n' ' '). Set UPLOAD_KEY_ALIAS to one of those."
+            exit 1
+          fi
+          echo "Key file opened; alias found."
       - name: Build the signed app bundle
         env:
           UPLOAD_KEYSTORE: ${{ runner.temp }}/upload.jks
