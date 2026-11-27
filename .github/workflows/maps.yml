@@ -1,6 +1,7 @@
 # Builds the offline map packs (maptools/) and publishes them on the "maps" release, where the Android app
-# downloads them. Runs every Monday, or by hand from the Actions tab. A push to a claude/ branch that changes
-# maptools/ only builds Rutland, as a check, and attaches it to the run instead of publishing.
+# downloads them. One job per region (every English county, Scotland, Wales), several at a time, each downloading
+# only its own area; then one job publishes them all with the list (index.json). Runs every Monday, or by hand
+# from the Actions tab. A push to a claude/ branch that changes maptools/ only builds Rutland, as a check.
 #
 # Map data © OpenStreetMap contributors, from Geofabrik. The packs are published under the ODbL.
 name: Offline maps
@@ -17,30 +18,75 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  list:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    permissions:
-      contents: write          # to publish the release (main only)
-    env:
-      TEST: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
+    timeout-minutes: 5
+    outputs:
+      regions: ${{ steps.r.outputs.regions }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: r
+        run: |
+          curl -fsSL -A "leafdash-maps (github.com/A2405U/Leafdash)" https://download.geofabrik.de/index-v1-nogeom.json -o index.json
+          echo "regions=$(python3 maptools/regions.py index.json ${{ github.ref != 'refs/heads/main' && '--test' || '' }})" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: list
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        region: ${{ fromJSON(needs.list.outputs.regions) }}
+    name: ${{ matrix.region.name }}
     steps:
       - uses: actions/checkout@v4
       - name: Tools
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
-          pip install --quiet osmium
-      - name: Build the packs
-        run: OUT=packs WORK=$RUNNER_TEMP/work maptools/build_all.sh
+          pip install --quiet osmium shapely
+      - name: Build
+        env:                              # from Geofabrik's list: passed as data, never written into the script
+          REGION_ID: ${{ matrix.region.id }}
+          REGION_NAME: ${{ matrix.region.name }}
+          REGION_PBF: ${{ matrix.region.pbf }}
+          REGION_POLY: ${{ matrix.region.poly }}
+        run: |
+          [[ "$REGION_ID" =~ ^[a-z0-9-]{1,60}$ ]] || { echo "::error::Unexpected region id"; exit 1; }
+          [[ "$REGION_PBF" == https://download.geofabrik.de/* && "$REGION_POLY" == https://download.geofabrik.de/* ]] || { echo "::error::Unexpected download address"; exit 1; }
+          maptools/build_one.sh "$REGION_ID" "$REGION_NAME" "$REGION_PBF" "$REGION_POLY" packs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pack-${{ matrix.region.id }}
+          path: packs/
+          retention-days: 7
+
+  publish:
+    needs: build
+    if: ${{ !cancelled() }}            # publish whatever built, even if a region failed
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write                   # to publish the release (main only)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pack-*
+          path: packs
+          merge-multiple: true
+      - name: The list
+        run: python3 maptools/make_index.py packs
       - name: Attach (test build)
-        if: env.TEST == '1'
+        if: github.ref != 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: leafdash-map-test
           path: packs/
           retention-days: 7
       - name: Publish on the "maps" release
-        if: env.TEST != '1'
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
