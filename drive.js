@@ -79,6 +79,8 @@ function fitScene() {
 }
 window.addEventListener('resize', fitScene);
 
+const CAR_ZOOM = { small: [0.31, 0.3, 0.31, 60], normal: [0.26, 0.46, 0.5, 30], large: [0.24, 0.5, 0.56, 22] };
+
 function startDrive() {
   fitScene();
   if (DR.raf) return;
@@ -125,7 +127,11 @@ function driveFrame(ts) {
   // --- camera ---
   const shx = P ? (Math.random() - 0.5) * P * 3 : 0, shy = P ? (Math.random() - 0.5) * P * 2 : 0;
   const cx = W / 2 + shx;
-  const y0 = H * (0.3 - P * 0.035) + shy;           // horizon
+  // Android Auto has no widgets under the road, so the road and car can be bigger: Settings → Drive screen →
+  // Car screen road size. [horizon, car width share, car height share, space kept under the car]
+  const onCar = document.body.classList.contains('car-screen');
+  const view = onCar ? (CAR_ZOOM[SET.carZoom] || CAR_ZOOM.normal) : [0.3, 0.4, 0.42, 88];
+  const y0 = H * (view[0] - P * 0.035) + shy;           // horizon
   const zn = 2, zoom = 1 + P * 0.08;
   const k = (H - y0) * zn;
   const CAM_H = 3.0;                                 // chase-camera height in metres
@@ -135,8 +141,8 @@ function driveFrame(ts) {
   const gp = (X, z) => [sx(X, z), sy(z)];
   const gh = (X, z, Y) => [sx(X, z), y0 + k * (1 - Y * s) / z];     // Y metres above the ground
   // where the car sits (~40% of the screen width, never behind the info chips)
-  let zr = (1.8 * s * k) / Math.min(0.4 * W, 0.42 * H);
-  zr = Math.max(zr, k / Math.max(40, (H - 88) - y0));
+  let zr = (1.8 * s * k) / Math.min(view[1] * W, view[2] * H);
+  zr = Math.max(zr, k / Math.max(40, (H - view[3]) - y0));
   // real road from OpenStreetMap, when enabled and matched
   const OG = osmActive() ? osmGeometry(zr + 2.2) : null;
 

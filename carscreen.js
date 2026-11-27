@@ -42,7 +42,7 @@ if (!CAR.isCar && typeof window.LeafNative?.toCar === 'function') {
   LeafDash.on('data', () => { if (!queued) { queued = true; setTimeout(flush, 200); } });
   LeafDash.on('gps', g => { if (!g.fake && carOn()) send({ k: 'gps', lat: g.lat, lon: g.lon, hdg: g.hdg, spd: g.spd }); });
   LeafDash.on('mode', m => { last = {}; lastFull = 0; if (carOn()) send({ k: 'mode', mode: m }); });
-  setInterval(() => { if (carOn()) send({ k: 'hb', mode: S.mode }); }, 1000);
+  setInterval(() => { if (carOn()) send({ k: 'hb', mode: S.mode, zoom: SET.carZoom || 'normal' }); }, 1000);
 }
 
 /* ---------------- on the car screen ---------------- */
@@ -87,6 +87,7 @@ window.__leafFromPhone = text => {
   if (!CAR.isCar) return;
   let m; try { m = typeof text === 'string' ? JSON.parse(text) : text; } catch { return; }
   if (m.mode && m.mode !== CAR.phoneMode) carFollow(m.mode);
+  if (m.zoom && /^(small|normal|large)$/.test(m.zoom)) SET.carZoom = m.zoom;   // Car screen road size, chosen on the phone
   CAR.phoneAt = Date.now();
   if (m.k === 'd' && CAR.live && m.d) {
     Object.assign(S.data, m.d);
