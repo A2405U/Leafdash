@@ -10,7 +10,7 @@
    ===================================================================== */
 
 const LeafDash = window.LeafDash = {
-  version: '6.9b',           // shown in Settings → About. Bump it with EVERY pull request, so the phone shows which one it's on. The "b" means beta, until version 1 (the Android app)
+  version: '1.0',           // shown in Settings → About and as the Android app's version. Bump it with EVERY pull request (1.1, 1.2 …), so the phone shows which one it's on. 1.0 = the first Google Play build
   metrics: {},           // id → metric definition
   widgets: {},           // id → widget definition
   addons: {},            // id → add-on definition

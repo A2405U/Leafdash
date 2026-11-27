@@ -31,6 +31,8 @@ Everything else is rejected before it's sent, with no override: clearing codes, 
 
 ## What leaves your phone
 
+The full [privacy policy](https://a2405u.github.io/Leafdash/privacy.html) (used for Google Play) says the same.
+
 Everything Leaf Dash knows stays in the browser on your phone, except these, each listed with whether it's on in **Settings → Your data**:
 
 | What | Sent to | When |
