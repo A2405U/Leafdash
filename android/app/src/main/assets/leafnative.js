@@ -15,6 +15,30 @@
   if (!N || window.__leafNativeReady) return;
   window.__leafNativeReady = true;
 
+  /* ---------- repeating jobs while the app is in the background ---------- */
+  // Android holds back a hidden page's timers (to once a second, then once a minute), which would stop the drive
+  // recorder, trip and range counting, the charge log, alerts and the car screen's updates. Every setInterval is
+  // also run from here: while the app isn't on screen, the app calls __leafNativeTick twice a second (a call from
+  // the app isn't held back), and any job that's due runs. On screen, the ordinary timers run as before.
+  const realSetInterval = window.setInterval.bind(window), realClearInterval = window.clearInterval.bind(window);
+  const jobs = new Map();
+  window.setInterval = (fn, ms, ...args) => {
+    if (typeof fn !== 'function') return realSetInterval(fn, ms, ...args);
+    const job = { fn, args, ms: Math.max(+ms || 0, 50), last: Date.now() };
+    job.id = realSetInterval(() => { job.last = Date.now(); fn(...args); }, ms);
+    jobs.set(job.id, job);
+    return job.id;
+  };
+  window.clearInterval = id => { jobs.delete(id); realClearInterval(id); };
+  window.__leafNativeTick = () => {
+    const now = Date.now();
+    for (const job of [...jobs.values()]) {
+      if (now - job.last < job.ms) continue;
+      job.last = now;
+      try { job.fn(...job.args); } catch (e) { console.error(e); }
+    }
+  };
+
   /* ---------- calls and answers ---------- */
   let seq = 0;
   const waiting = new Map();
@@ -130,6 +154,25 @@
     async getDevices() { return JSON.parse(await call('bleRemembered')).map(Device.of); },
   };
   Object.defineProperty(navigator, 'bluetooth', { value: bluetooth, configurable: true });
+
+  /* ---------- location: Android's GPS, which keeps going in the background ---------- */
+  // The WebView's own location stops while the app isn't on screen, so the road (and the car screen's road) would
+  // stop too. Fixes arrive as calls from the app (window.__leafNativeFix), which the page runs even when hidden.
+  const watchers = new Map();
+  let watchSeq = 0;
+  window.__leafNativeFix = (lat, lon, acc, alt, hdg, spd, t) => {
+    const pos = { coords: { latitude: lat, longitude: lon, accuracy: acc, altitude: alt, altitudeAccuracy: null,
+      heading: hdg == null || hdg < 0 ? null : hdg, speed: spd == null || spd < 0 ? null : spd }, timestamp: t || Date.now() };
+    for (const w of [...watchers.values()]) { try { w.ok(pos); } catch (e) { console.error(e); } if (w.once) watchers.delete(w.id); }
+    if (!watchers.size) N.gpsStop();
+  };
+  window.__leafNativeFixError = msg => { for (const w of watchers.values()) try { w.err?.({ code: 1, message: msg }); } catch {} };
+  const geo = {
+    watchPosition(ok, err) { const id = ++watchSeq; watchers.set(id, { id, ok, err }); N.gpsStart(); return id; },
+    clearWatch(id) { watchers.delete(id); if (!watchers.size) N.gpsStop(); },
+    getCurrentPosition(ok, err) { const id = ++watchSeq; watchers.set(id, { id, ok, err, once: true }); N.gpsStart(); },
+  };
+  Object.defineProperty(navigator, 'geolocation', { value: geo, configurable: true });
 
   /* ---------- keeping the screen on ---------- */
   let locks = 0;

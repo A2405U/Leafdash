@@ -53,6 +53,8 @@ if (!CAR.isCar && typeof window.LeafNative?.toCar === 'function') {
   // Sent as the data arrives (at most five times a second), not on a timer: timers are held back while the app
   // is in the background, and the car screen would think the phone had gone.
   LeafDash.on('data', () => { if (Date.now() - lastSent >= 200) flush(); });
+  // the car screen has just (re)loaded and has nothing: send everything now (from the app, so not held back)
+  window.__leafCarHello = () => { last = {}; lastFull = 0; lastX = ''; flush(); };
   LeafDash.on('gps', g => { if (!g.fake && carOn()) send({ k: 'gps', lat: g.lat, lon: g.lon, hdg: g.hdg, spd: g.spd }); });
   LeafDash.on('mode', m => { last = {}; lastFull = 0; try { window.LeafNative.carMode?.(m, SET.carZoom || 'normal'); } catch {} if (carOn()) send({ k: 'mode', mode: m }); });
   setInterval(() => { if (carOn() && Date.now() - lastHb > 900) hb(); }, 1000);   // while nothing is coming in

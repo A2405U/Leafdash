@@ -118,7 +118,7 @@ final class SurfaceRenderer implements SurfaceCallback {
 
     /** The button on the car screen: load the page again. */
     void reload() {
-        if (web != null) web.reload();
+        if (web != null) { web.reload(); CarLink.hello(); }
     }
 
     void release() {

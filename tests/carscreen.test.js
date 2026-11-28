@@ -84,11 +84,18 @@ module.exports = async ({ browser, base, assert, note }) => {
   const cellsSent = await until(ph, () => __sentCar.some(m => m.k === 'd' && Array.isArray(m.d.cells) && m.d.cells.length === 96), 15000);
   assert.ok(cellsSent, 'the cells were not sent to the car screen (its Cells tab needs them)');
   assert.ok(sent.filter(m => m.k === 'd').every(m => m.mode === 'on'), 'data messages without the live mode');
+  // the car screen (re)loaded: the app asks the phone for everything, unchanged values included
+  const hello = await ph.evaluate(async () => {
+    __sentCar.length = 0; __leafCarHello();
+    const d = __sentCar.find(m => m.k === 'd');
+    return d ? { gear: 'gear' in d.d, speed: 'speed' in d.d, soc: 'soc' in d.d, x: !!d.x } : null;
+  });
+  assert.ok(hello && hello.gear && hello.speed && hello.soc && hello.x, `a new car screen wasn't sent everything: ${JSON.stringify(hello)}`);
   // the app's own side is told the connection state (it repeats the heartbeat and keeps the app running)
   const modes = await ph.evaluate(() => [...new Set(__carMode)]);
   assert.ok(modes.includes('on:normal'), `the app wasn't told the phone is connected: ${modes}`);
   await pctx.close();
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`car page: message → own Demo → phone's live values (30 mph, no demo label, its lamps and trip totals, real history) → message again; menu without Debug; ▲ ▼ page buttons; clear of AA's bar; saves nothing. ▲ ▼ page the Dash tab. Phone sends ${sent.length} messages (${kinds}) and the cells`);
+  note(`car page: message → own Demo → phone's live values (30 mph, no demo label, its lamps and trip totals, real history) → message again; menu without Debug; ▲ ▼ page buttons; clear of AA's bar; saves nothing. ▲ ▼ page the Dash tab. A new car screen gets everything. Phone sends ${sent.length} messages (${kinds}) and the cells`);
 };
