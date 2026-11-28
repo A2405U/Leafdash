@@ -87,6 +87,11 @@ public class MainActivity extends Activity {
         for (int i = 0; i < results.length && i < permissions.length; i++)   // notifications are optional: only Bluetooth decides
             if (permissions[i].startsWith("android.permission.BLUETOOTH")) granted &= results[i] == PackageManager.PERMISSION_GRANTED;
         if (code == NativeBridge.REQ_BLUETOOTH) bridge.onPermissionResult(granted);
+        else if (code == NativeBridge.REQ_GPS) {
+            boolean any = false;
+            for (int r : results) any |= r == PackageManager.PERMISSION_GRANTED;
+            bridge.onGpsPermission(any);
+        }
         else if (code == REQ_LOCATION && geoCallback != null) {
             boolean any = false;
             for (int r : results) any |= r == PackageManager.PERMISSION_GRANTED;

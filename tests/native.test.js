@@ -66,6 +66,8 @@ function FAKE_NATIVE(guard) {
     bleDisconnect: () => setTimeout(() => window.__leafNativeDisconnected(), 5),
     bleFastLink: () => { N.fastAsked++; return true; },
     keepAwake: on => { N.awake = on; },
+    gpsStart: () => { N.gps = true; },
+    gpsStop: () => { N.gps = false; },
     speak: text => N.spoken.push(text),
     stopSpeaking: () => {},
     share: (id, name) => { N.saved.push({ name, how: 'share' }); reply(id, true); },
@@ -118,6 +120,16 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(again, 'fast link not asked for again when the link slowed down');
   await page.evaluate(() => { window.__lat = 30; });
 
+  // location from Android's GPS (keeps going in the background): the page's watch starts it, fixes reach the page
+  const fix = await page.evaluate(async () => {
+    const got = []; LeafDash.on('gps', g => got.push(g));
+    const started = await new Promise(r => { const t0 = Date.now(); (function w() { if (window.__native.gps || Date.now() - t0 > 4000) r(window.__native.gps); else setTimeout(w, 100); })(); });
+    window.__leafNativeFix(51.5001, -0.1201, 4, 20, 90, 12.5, Date.now());
+    await new Promise(r => setTimeout(r, 100));
+    return { started, got: got.filter(g => !g.fake).map(g => [g.lat, g.lon, g.spd]) };
+  });
+  assert.ok(fix.started && fix.got.some(g => g[0] === 51.5001 && g[2] === 12.5), `GPS through the app: ${JSON.stringify(fix)}`);
+
   // spoken update and a backup file
   await page.evaluate(() => { say('Battery at 50%', true); bkSave(false); });
   const files = await until(page, () => window.__native.saved.length && window.__native);
@@ -138,6 +150,6 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(auto, 'did not connect by itself when the app opened');
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; voice, backup file, reconnect and auto-connect work`);
+  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; voice, backup file, reconnect and auto-connect work`);
   await ctx.close();
 };

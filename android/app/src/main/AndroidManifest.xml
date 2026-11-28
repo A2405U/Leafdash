@@ -16,6 +16,7 @@
     <!-- keep reading the car with the screen off or another app in front (KeepAliveService), with a notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Android Auto: a navigation-type app may draw its own picture on the car screen -->
     <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
@@ -65,7 +66,7 @@
         <service
             android:name=".KeepAliveService"
             android:exported="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:foregroundServiceType="connectedDevice|location" />
 
         <!-- hands files to the share sheet -->
         <provider

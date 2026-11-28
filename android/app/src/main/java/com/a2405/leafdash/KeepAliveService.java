@@ -42,6 +42,13 @@ public final class KeepAliveService extends Service {
         }
     }
 
+    /** Location was just allowed: start again, so the service can also keep GPS going in the background. */
+    static void refresh(Context context) {
+        if (!running) return;
+        Context app = context.getApplicationContext();
+        try { app.startForegroundService(new Intent(app, KeepAliveService.class)); } catch (RuntimeException ignored) { }
+    }
+
     /** The app is closing: stop now. */
     static void stopNow(Context context) {
         if (pendingStop != null) { UI.removeCallbacks(pendingStop); pendingStop = null; }
@@ -68,11 +75,17 @@ public final class KeepAliveService extends Service {
                 .setContentIntent(open)
                 .setOngoing(true)
                 .build();
+        // a location service too when location is allowed, so GPS keeps going with the app in the background
+        int type = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED)
+            type |= ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
         try {
-            startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+            startForeground(ID, n, type);
         } catch (RuntimeException e) {
-            running = false;
-            stopSelf();
+            // location not allowed for a service right now (e.g. started from the background): Bluetooth only
+            try { startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE); }
+            catch (RuntimeException e2) { running = false; stopSelf(); }
         }
         return START_NOT_STICKY;
     }

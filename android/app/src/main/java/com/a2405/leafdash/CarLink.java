@@ -19,7 +19,23 @@ final class CarLink {
 
     private CarLink() {}
 
-    static void attach(WebView web) { car = web; beat(); }
+    private static volatile java.util.function.Consumer<String> phone;   // runs JavaScript in the phone page
+
+    static void attach(WebView web) { car = web; beat(); hello(); }
+
+    /** The phone page (NativeBridge), or null when the phone app closes. */
+    static void phone(java.util.function.Consumer<String> runJs) { phone = runJs; }
+
+    /**
+     * The car screen has just loaded (or reloaded) and knows nothing yet: ask the phone page to send everything
+     * now, not only what changes. Waits a moment for the car page to finish loading.
+     */
+    static void hello() {
+        for (int ms : new int[]{ 1500, 4000 }) UI.postDelayed(() -> {
+            java.util.function.Consumer<String> p = phone;
+            if (p != null && car != null) p.accept("window.__leafCarHello&&window.__leafCarHello()");
+        }, ms);
+    }
 
     static void detach(WebView web) { if (car == web) car = null; }
 

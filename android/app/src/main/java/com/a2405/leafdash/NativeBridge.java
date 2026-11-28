@@ -53,7 +53,7 @@ import java.util.Map;
 @SuppressLint("MissingPermission")   // every Bluetooth call is behind withPermissions()
 final class NativeBridge implements BleLink.Listener {
     private static final String PREFS = "leafdash", KEY_ADDR = "adapter_address", KEY_NAME = "adapter_name";
-    static final int REQ_BLUETOOTH = 41;
+    static final int REQ_BLUETOOTH = 41, REQ_GPS = 44;
 
     private final MainActivity activity;
     private WebView web;
@@ -63,11 +63,17 @@ final class NativeBridge implements BleLink.Listener {
     private Runnable afterPermission, permissionRefused;
 
     private final MapDownloads maps;
+    private final Gps gps;
+    private boolean gpsWanted;
 
     NativeBridge(MainActivity activity) {
         this.activity = activity;
         this.link = new BleLink(activity, this);
         this.maps = new MapDownloads(activity, this::run);
+        CarLink.phone(this::run);
+        this.gps = new Gps(activity, l -> run("window.__leafNativeFix&&window.__leafNativeFix(" + l.getLatitude() + "," + l.getLongitude() + ","
+                + (l.hasAccuracy() ? l.getAccuracy() : "null") + "," + (l.hasAltitude() ? l.getAltitude() : "null") + ","
+                + (l.hasBearing() && l.hasSpeed() && l.getSpeed() > 0.5f ? l.getBearing() : "null") + "," + (l.hasSpeed() ? l.getSpeed() : "null") + "," + l.getTime() + ")"));
     }
 
     /** The page this bridge answers (set once the web view exists). */
@@ -206,6 +212,30 @@ final class NativeBridge implements BleLink.Listener {
     @JavascriptInterface
     public void bleDisconnect() { link.disconnect(); }
 
+    /* ---------------- location (leafnative.js: navigator.geolocation) ---------------- */
+    @JavascriptInterface
+    public void gpsStart() {
+        ui.post(() -> {
+            gpsWanted = true;
+            if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) startGps();
+            else activity.requestPermissions(new String[]{ Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION }, REQ_GPS);
+        });
+    }
+
+    @JavascriptInterface
+    public void gpsStop() { ui.post(() -> { gpsWanted = false; gps.stop(); }); }
+
+    /** The answer to the location permission request. */
+    void onGpsPermission(boolean granted) {
+        if (granted && gpsWanted) startGps();
+        else if (!granted) run("window.__leafNativeFixError&&window.__leafNativeFixError('Location permission was not given')");
+    }
+
+    private void startGps() {
+        if (!gps.start()) { run("window.__leafNativeFixError&&window.__leafNativeFixError('Location is switched off')"); return; }
+        KeepAliveService.refresh(activity);   // with location allowed, the service can keep GPS going in the background
+    }
+
     /* ---------------- the car screen (carscreen.js, CarLink) ---------------- */
     @JavascriptInterface
     public boolean carOn() { return CarLink.showing(); }
@@ -237,7 +267,9 @@ final class NativeBridge implements BleLink.Listener {
 
     void close() {
         CarLink.phoneGone();
+        CarLink.phone(null);
         KeepAliveService.stopNow(activity);
+        gps.stop();
         link.close();
         if (tts != null) { tts.shutdown(); tts = null; }
     }

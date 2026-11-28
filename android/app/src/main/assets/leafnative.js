@@ -131,6 +131,25 @@
   };
   Object.defineProperty(navigator, 'bluetooth', { value: bluetooth, configurable: true });
 
+  /* ---------- location: Android's GPS, which keeps going in the background ---------- */
+  // The WebView's own location stops while the app isn't on screen, so the road (and the car screen's road) would
+  // stop too. Fixes arrive as calls from the app (window.__leafNativeFix), which the page runs even when hidden.
+  const watchers = new Map();
+  let watchSeq = 0;
+  window.__leafNativeFix = (lat, lon, acc, alt, hdg, spd, t) => {
+    const pos = { coords: { latitude: lat, longitude: lon, accuracy: acc, altitude: alt, altitudeAccuracy: null,
+      heading: hdg == null || hdg < 0 ? null : hdg, speed: spd == null || spd < 0 ? null : spd }, timestamp: t || Date.now() };
+    for (const w of [...watchers.values()]) { try { w.ok(pos); } catch (e) { console.error(e); } if (w.once) watchers.delete(w.id); }
+    if (!watchers.size) N.gpsStop();
+  };
+  window.__leafNativeFixError = msg => { for (const w of watchers.values()) try { w.err?.({ code: 1, message: msg }); } catch {} };
+  const geo = {
+    watchPosition(ok, err) { const id = ++watchSeq; watchers.set(id, { id, ok, err }); N.gpsStart(); return id; },
+    clearWatch(id) { watchers.delete(id); if (!watchers.size) N.gpsStop(); },
+    getCurrentPosition(ok, err) { const id = ++watchSeq; watchers.set(id, { id, ok, err, once: true }); N.gpsStart(); },
+  };
+  Object.defineProperty(navigator, 'geolocation', { value: geo, configurable: true });
+
   /* ---------- keeping the screen on ---------- */
   let locks = 0;
   class Lock extends Emitter {
