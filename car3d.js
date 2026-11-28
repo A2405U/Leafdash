@@ -176,8 +176,8 @@ function drawCar3D(g, cam, opt) {
     g.fillStyle = gr; path(pts); g.fill(); g.restore();
   };
   const F = CAR_LEN - 0.1;
-  if (Lt.high) beam([[-1.1, 0, F - 0.6], [1.1, 0, F - 0.6], [6.0, 0, F + 15], [6.4, 0, F + 80], [-6.4, 0, F + 80], [-6.0, 0, F + 15]], F - 0.6, F + 80, 0.4);
-  if (Lt.low || Lt.high) beam([[-1.1, 0, F - 0.6], [1.1, 0, F - 0.6], [5.8, 0, F + 13], [6.1, 0, F + 24], [-6.1, 0, F + 28], [-5.8, 0, F + 13]], F - 0.6, F + 28, 0.55);
+  if (Lt.high) beam([[-1.4, 0, F - 0.6], [1.4, 0, F - 0.6], [7.5, 0, F + 7], [8.0, 0, F + 80], [-8.0, 0, F + 80], [-7.5, 0, F + 7]], F - 0.6, F + 80, 0.4);
+  if (Lt.low || Lt.high) beam([[-1.4, 0, F - 0.6], [1.4, 0, F - 0.6], [7.0, 0, F + 6], [7.4, 0, F + 24], [-7.4, 0, F + 28], [-7.0, 0, F + 6]], F - 0.6, F + 28, 0.55);
 
   // visible faces, far to near
   const vis = CAR_MODEL.solid

@@ -23,7 +23,7 @@ const CAR_DIDS = [
   { key: 'accelRaw',   ecu: 'vcm', did: '1132', tier: 2, drive: 3,  len: 2, dec: v => u16(v, 0) },      // accelerator: 0 released, 314 about halfway, 682 on the floor
   { key: 'brakeRawPos', ecu: 'vcm', did: '1119', tier: 3, drive: 4, len: 2, dec: v => u16(v, 0) },      // brake pedal: 0 released, 31 light, 1022 firm
   { key: 'rpm',        ecu: 'vcm', did: '1255', tier: 2, drive: 6,  len: 2, dec: v => s16(v, 0), unit: 'rpm', verify: true },
-  { key: 'ePedalRaw',  ecu: 'vcm', did: '131A', tier: 3, drive: 6,  len: 1, dec: v => v[0] },
+  { key: 'ePedalRaw',  ecu: 'vcm', did: '131A', tier: 1, drive: 3,  len: 1, dec: v => v[0] },        // as often as ECO (131B): both are switches you press
   { key: 'auxKw',      ecu: 'vcm', did: '1152', tier: 5, drive: 15,  len: 1, dec: v => v[0] * 100 / 1000, unit: 'kW' },
   // climate (confirmed on a 2021 ZE1 with a step-by-step mode scan)
   { key: 'climRaw',    ecu: 'vcm', did: '1323', tier: 3, drive: 10,  len: 1, dec: v => v[0] },            // 0x20 = climate running

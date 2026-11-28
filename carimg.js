@@ -81,8 +81,10 @@ function drawCarImg(g, cam, opt) {
   const F = 4.3;
   // dipped: spreads across all lanes but stops short (UK: reaches a little further on the left); main beam: same width, much further
   const N = F - 0.9;                                    // start under the bonnet so the light meets the car
-  if (Lt.high) beam([[-1.0, N], [1.0, N], [6.0, F + 15], [6.4, F + 80], [-6.4, F + 80], [-6.0, F + 15]], N, F + 80, 0.4);
-  if (Lt.low || Lt.high) beam([[-1.0, N], [1.0, N], [5.8, F + 13], [6.1, F + 24], [-6.1, F + 28], [-5.8, F + 13]], N, F + 28, 0.5);
+  // both spread out straight away from the corners of the car, so the light fills the lanes in front rather than
+  // sitting behind the car as a thin column (1.9: they were too narrow, most clearly on the car screen)
+  if (Lt.high) beam([[-1.4, N], [1.4, N], [7.5, F + 7], [8.0, F + 80], [-8.0, F + 80], [-7.5, F + 7]], N, F + 80, 0.4);
+  if (Lt.low || Lt.high) beam([[-1.4, N], [1.4, N], [7.0, F + 6], [7.4, F + 24], [-7.4, F + 28], [-7.0, F + 6]], N, F + 28, 0.5);
   if (tail > 0) pool(0, 0.05, Lt.brake ? 1.3 : 0.9, `rgba(255,40,60,${(Lt.brake ? 0.45 : 0.3) * tail})`);
   if (Lt.reverse) pool(0, -0.35, 1.25, 'rgba(235,240,255,.38)', 0.26);
   if (indL) { pool(-1.0, 0.1, 0.9, 'rgba(255,160,20,.6)'); pool(-1.15, 2.5, 0.75, 'rgba(255,160,20,.5)', 0.3); }

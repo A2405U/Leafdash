@@ -300,6 +300,10 @@ function decodeG1(p) {
   const d = {};
   for (const k in G1) d[k] = readField(p, G1[k]);
   if (d.current != null) d.current *= CURRENT_SIGN;
+  // a garbled reply can decode to thousands of amps (seen in the car as a "peak regen" in the tens of thousands of
+  // kW): a 40 kWh Leaf stays well within ±600 A and 200–450 V, so anything outside that is dropped, not shown
+  if (d.current != null && Math.abs(d.current) > 600) { delete d.current; window.LeafDash?.emit('badreply', { why: 'current out of range', text: '' }); }
+  if (d.voltage != null && (d.voltage < 200 || d.voltage > 450)) { delete d.voltage; window.LeafDash?.emit('badreply', { why: 'voltage out of range', text: '' }); }
   if (d.current != null && d.voltage != null) d.kw = d.current * d.voltage / 1000;
   if (S.data.sohSrc !== 'bms' && d.ahr != null) { d.soh = d.ahr / NEW_AH * 100; d.sohSrc = 'est'; }
   return d;
@@ -730,12 +734,15 @@ const TRIP_KEY = 'leafdash.trip';
 const newTrip = () => ({ used: 0, regen: 0, peak: 0, peakRegen: 0, since: Date.now() });
 let T = (() => { try { return { ...newTrip(), ...JSON.parse(localStorage.getItem(TRIP_KEY)) }; } catch { return newTrip(); } })();
 const saveTrip = () => { if (window.LD_RESTORING) return; try { localStorage.setItem(TRIP_KEY, JSON.stringify(T)); } catch {} };
+const KW_SANE = 250;      // no Leaf draws or regenerates more; a bigger figure is a bad reading
+if (!(T.peak <= KW_SANE)) T.peak = 0;                     // clear a peak saved from a bad reading before 1.9
+if (!(T.peakRegen <= KW_SANE)) T.peakRegen = 0;
 
 const hist = [];          // { t, kw } for the graph (last 15 min)
 let lastSampleAt = 0, chartMinutes = 5;
 
 function recordSample(kw) {
-  if (kw == null || S.lastUpdate === lastSampleAt) return;
+  if (kw == null || S.lastUpdate === lastSampleAt || Math.abs(kw) > KW_SANE) return;
   const now = S.lastUpdate;
   if (lastSampleAt) {
     const dt = Math.min((now - lastSampleAt) / 1000, 5);  // cap gaps so a pause doesn't add phantom energy

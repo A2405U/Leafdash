@@ -91,6 +91,8 @@ function startDrive() {
 function driveFrame(ts) {
   DR.raf = null;
   if (S.view !== 'drive' || document.hidden || S.parked) return;   // parked: the app is in the background (ParkedHost)
+  // the car screen draws at most 30 times a second: plenty for its size, and it leaves time for taps and scrolling
+  if (DR.last && ts - DR.last < 31 && document.body.classList.contains('car-screen')) { DR.raf = requestAnimationFrame(driveFrame); return; }
   const dt = DR.last ? Math.min(0.05, (ts - DR.last) / 1000) : 0;
   DR.last = ts;
 

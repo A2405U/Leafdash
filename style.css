@@ -694,3 +694,9 @@ body.car-screen {
 .car-screen #view-dash, .car-screen #view-energy, .car-screen #view-cells { margin-right: 70px; }
 .car-screen #energyChart { height: 180px; }
 .car-screen #cellChart { height: 200px; }
+
+/* ☰ menu extras on the car screen: page buttons on/off, reload */
+.car-screen .car-extras { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.car-screen .car-extras button { background: none; border: 0; color: var(--muted); font: 600 15px system-ui; padding: 12px 8px; border-radius: 12px; text-align: center; }
+.car-screen.car-menu .tabs { width: 190px; }
+.car-screen.car-no-pager #view-dash, .car-screen.car-no-pager #view-energy, .car-screen.car-no-pager #view-cells { margin-right: 0; }

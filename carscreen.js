@@ -144,14 +144,35 @@ if (CAR.isCar) {
   btn.addEventListener('click', () => window.__leafCarMenu());
   document.body.appendChild(btn);
   document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { window.__leafCarMenu(false); scrollTo(0, 0); }));
-  // ▲ ▼: page through Dash, Energy and Cells (Android Auto passes taps on, but not swipes)
+  // In the ☰ menu, under the tabs: the page buttons on or off (kept on this car screen only), and a reload
+  const PREF = 'leafdash.carscreen';
+  const pref = (() => { try { return JSON.parse(localStorage.getItem(PREF)) || {}; } catch { return {}; } })();
+  const nav = document.querySelector('.tabs');
+  const extras = document.createElement('div');
+  extras.className = 'car-extras';
+  extras.innerHTML = '<button data-car="pager"></button><button data-car="reload">Reload car screen</button>';
+  nav.appendChild(extras);
+  const showPagerPref = () => {
+    extras.querySelector('[data-car=pager]').textContent = `▲ ▼ buttons: ${pref.pager === false ? 'off' : 'on'}`;
+    document.body.classList.toggle('car-no-pager', pref.pager === false);
+  };
+  extras.addEventListener('click', e => {
+    const b = e.target.closest('[data-car]'); if (!b) return;
+    if (b.dataset.car === 'reload') { location.reload(); return; }   // the app then asks the phone for everything again
+    pref.pager = pref.pager === false;
+    try { localStorage.setItem(PREF, JSON.stringify(pref)); } catch {}
+    showPagerPref();
+  });
+  showPagerPref();
+
+  // ▲ ▼: page through Dash, Energy and Cells (swipes work on most cars too; the buttons can be turned off in ☰)
   const pager = document.createElement('div');
   pager.className = 'car-pager hidden';
   pager.innerHTML = '<button data-p="-1" aria-label="Up">▲</button><button data-p="1" aria-label="Down">▼</button>';
   pager.addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) scrollBy({ top: +b.dataset.p * innerHeight * 0.6, behavior: 'smooth' }); });
   document.body.appendChild(pager);
   const pagerTick = () => {
-    const more = S.view !== 'drive' && document.documentElement.scrollHeight > innerHeight + 4;
+    const more = S.view !== 'drive' && pref.pager !== false && document.documentElement.scrollHeight > innerHeight + 4;
     pager.classList.toggle('hidden', !more);
     if (!more) return;
     pager.children[0].disabled = scrollY < 4;

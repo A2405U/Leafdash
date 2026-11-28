@@ -96,8 +96,10 @@ final class WebHost {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                // On the car screen, hide the "no Bluetooth" notice and the demo test-panel button.
+                // On the car screen, hide the "no Bluetooth" notice and the demo test-panel button, and ask the phone
+                // page for everything (a reload from the ☰ menu starts empty).
                 if (!carScreen) return;
+                CarLink.hello();
                 view.evaluateJavascript(
                         "(function(){var s=document.createElement('style');s.textContent='#noBt,#demoFab,#demoPanel{display:none!important}';"
                                 + "document.head.appendChild(s);"

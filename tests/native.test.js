@@ -151,6 +151,16 @@ module.exports = async ({ browser, base, assert, note }) => {
   });
   assert.ok(park.stopped && park.running && park.mode === 'on', `parking: ${JSON.stringify(park)}`);
 
+  // a garbled reading (thousands of kW) never becomes a peak, and a garbled current is dropped (1.9)
+  const sane = await page.evaluate(() => {
+    const before = { peak: T.peak, regen: T.peakRegen };
+    S.lastUpdate += 1000; recordSample(-15000); S.lastUpdate += 1000; recordSample(12000);
+    const p = new Array(53).fill(0); p[0] = 0x61; p[1] = 1; p[2] = 0x7f; p[3] = 0xff; p[4] = 0xff; p[5] = 0xff;   // current way out of range
+    const d = decodeG1(p);
+    return { kept: T.peak === before.peak && T.peakRegen === before.regen, kw: d.kw ?? null, current: d.current ?? null };
+  });
+  assert.ok(sane.kept && sane.kw === null && sane.current === null, `bad power readings got through: ${JSON.stringify(sane)}`);
+
   // spoken update and a backup file
   await page.evaluate(() => { say('Battery at 50%', true); bkSave(false); });
   const files = await until(page, () => window.__native.saved.length && window.__native);
@@ -171,6 +181,6 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(auto, 'did not connect by itself when the app opened');
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; repeating jobs run from the app's nudge in the background; parking pauses only the Drive animation; voice, backup file, reconnect and auto-connect work`);
+  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; repeating jobs run from the app's nudge in the background; parking pauses only the Drive animation; bad power readings ignored; voice, backup file, reconnect and auto-connect work`);
   await ctx.close();
 };

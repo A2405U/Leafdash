@@ -109,11 +109,27 @@ final class SurfaceRenderer implements SurfaceCallback {
         CarLink.run("window.scrollBy({left:" + Math.round(-velocityX * 0.25f / density) + ",top:" + Math.round(-velocityY * 0.25f / density) + ",behavior:'smooth'})");
     }
 
-    /** A swipe on the car screen, where the car passes them on: scroll the page by the same amount. */
+    /** A swipe on the car screen: scroll the page the same amount, gathered into one step a frame (smoother). */
+    private float scrollX, scrollY;
+    private boolean scrollQueued;
+
     @Override
     public void onScroll(float distanceX, float distanceY) {
         if (web == null) return;
-        CarLink.run("window.scrollBy(" + Math.round(distanceX / density) + "," + Math.round(distanceY / density) + ")");
+        scrollX += distanceX; scrollY += distanceY;
+        if (scrollQueued) return;
+        scrollQueued = true;
+        ui.postDelayed(() -> {
+            scrollQueued = false;
+            int x = Math.round(scrollX / density), y = Math.round(scrollY / density);
+            scrollX = 0; scrollY = 0;
+            if (web != null && (x != 0 || y != 0)) web.evaluateJavascript("window.scrollBy(" + x + "," + y + ")", null);
+        }, 16);
+    }
+
+    /** Android Auto's own button: open or close the Leaf Dash ☰ menu. */
+    void toggleMenu() {
+        CarLink.run("window.__leafCarMenu&&window.__leafCarMenu()");
     }
 
     /** The button on the car screen: load the page again. */

@@ -42,7 +42,7 @@ module.exports = async ({ browser, base, assert, note }) => {
 
   // ☰: the tabs, without Debug; Android Auto's bottom bar kept clear
   await page.click('#carMenuBtn');
-  const menu = await page.evaluate(() => ({ open: document.body.classList.contains('car-menu'), tabs: [...document.querySelectorAll('.tabs button')].filter(b => getComputedStyle(b).display !== 'none').map(b => b.textContent),
+  const menu = await page.evaluate(() => ({ open: document.body.classList.contains('car-menu'), tabs: [...document.querySelectorAll('.tabs button[data-view]')].filter(b => getComputedStyle(b).display !== 'none').map(b => b.textContent),
     sceneBottom: $('drive').getBoundingClientRect().bottom }));
   assert.ok(menu.open && menu.tabs.join() === 'Drive,Dash,Energy,Cells', `menu: ${JSON.stringify(menu)}`);
   assert.ok(menu.sceneBottom <= 480 - 66 + 1, `the drive scene runs under Android Auto's bar (bottom ${menu.sceneBottom})`);
@@ -53,6 +53,13 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(pg, 'no page buttons on the Dash tab');
   await page.click('.car-pager [data-p="1"]');
   assert.ok(await until(page, () => scrollY > 100, 3000), 'the ▼ button did not scroll down');
+  // ☰ → "▲ ▼ buttons: off" hides them (and is remembered on this car screen); on again brings them back
+  await page.click('#carMenuBtn'); await page.click('[data-car="pager"]');
+  const off = await until(page, () => document.querySelector('.car-pager').classList.contains('hidden') && JSON.parse(localStorage.getItem('leafdash.carscreen')).pager === false, 2000);
+  assert.ok(off, 'the page buttons did not turn off from the menu');
+  await page.click('[data-car="pager"]');
+  assert.ok(await until(page, () => !document.querySelector('.car-pager').classList.contains('hidden'), 2000), 'the page buttons did not come back');
+  await page.evaluate(() => __leafCarMenu(false));
   await page.evaluate(() => showView('drive'));
   assert.ok(await until(page, () => document.querySelector('.car-pager').classList.contains('hidden'), 2000), 'page buttons showing on the Drive tab');
 
