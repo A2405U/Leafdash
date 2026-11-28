@@ -27,6 +27,8 @@ public class MainActivity extends Activity {
 
     private WebView web;
     private NativeBridge bridge;
+    private FrameLayout root;
+    private ParkedHost parked;
     private GeolocationPermissions.Callback geoCallback;
     private String geoOrigin;
     private ValueCallback<Uri[]> fileCallback;
@@ -61,7 +63,8 @@ public class MainActivity extends Activity {
             }
         });
         // Android 15+ draws apps under the status and navigation bars: keep the page clear of them.
-        FrameLayout root = new FrameLayout(this);
+        root = new FrameLayout(this);
+        parked = new ParkedHost(this);
         root.setBackgroundColor(Color.BLACK);
         root.addView(web, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         root.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -117,17 +120,22 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        if (parked != null && parked.parked()) parked.unpark(web, root);
         if (bridge != null) bridge.background(false);
     }
 
     @Override
     protected void onStop() {
-        if (bridge != null) bridge.background(true);   // keep the page's repeating jobs going (NativeBridge)
+        // connected (or showing the car screen): move the page somewhere it keeps running (ParkedHost)
+        if (bridge != null && bridge.keepRunning() && web.getWidth() > 0)
+            parked.park(web, web.getWidth(), web.getHeight(), getResources().getDisplayMetrics().densityDpi);
+        if (bridge != null) bridge.background(true);   // and keep the page's repeating jobs going (NativeBridge)
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
+        if (parked != null && parked.parked()) parked.unpark(web, root);
         bridge.close();
         web.destroy();
         super.onDestroy();

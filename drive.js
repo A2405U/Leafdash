@@ -90,7 +90,7 @@ function startDrive() {
 
 function driveFrame(ts) {
   DR.raf = null;
-  if (S.view !== 'drive' || document.hidden) return;
+  if (S.view !== 'drive' || document.hidden || S.parked) return;   // parked: the app is in the background (ParkedHost)
   const dt = DR.last ? Math.min(0.05, (ts - DR.last) / 1000) : 0;
   DR.last = ts;
 
@@ -316,6 +316,9 @@ renderCar();
 $('btnDriveSettings').addEventListener('click', () => openSettings('drive'));
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.view === 'drive') startDrive(); }));
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.view === 'drive') startDrive(); });
+/* Android app: in the background the page is kept running on an invisible display (ParkedHost). Nobody sees the
+   Drive screen there, so its animation pauses; everything else carries on. */
+window.__leafParked = on => { S.parked = !!on; if (!on && S.view === 'drive') startDrive(); };
 // GPS starts once there's something to drive with (connected or demo)
 setInterval(() => { if (S.mode === 'on' || (SET.realRoad && !OSM.fixture)) startGps(); }, 2000);
 if (S.view === 'drive') startDrive();

@@ -213,9 +213,17 @@ final class NativeBridge implements BleLink.Listener {
     public void bleDisconnect() { link.disconnect(); }
 
     /* ---------------- the page's repeating jobs while the app is in the background ---------------- */
+    private long lastAnswer = System.currentTimeMillis(), lastWarned;
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             NativeBridge.this.run("window.__leafNativeTick&&window.__leafNativeTick()");
+            // a check that the page is still running: for "adb logcat -s LeafDash" if it ever freezes again
+            if (web != null) web.evaluateJavascript("1", v -> lastAnswer = System.currentTimeMillis());
+            long quiet = System.currentTimeMillis() - lastAnswer;
+            if (quiet > 5000 && System.currentTimeMillis() - lastWarned > 30000) {
+                lastWarned = System.currentTimeMillis();
+                android.util.Log.w("LeafDash", "the page hasn't answered for " + quiet / 1000 + " s (connection " + pageMode + ")");
+            }
             ui.postDelayed(this, 500);
         }
     };
@@ -257,9 +265,15 @@ final class NativeBridge implements BleLink.Listener {
     @JavascriptInterface
     public void toCar(String json) { CarLink.send(json); }
 
+    private volatile String pageMode = "off";
+
+    /** Connected, connecting, or showing the car screen: the page should keep running in the background. */
+    boolean keepRunning() { return "on".equals(pageMode) || "busy".equals(pageMode) || CarLink.showing(); }
+
     /** The page's connection state: tells the car screen, and keeps the app running while connected. */
     @JavascriptInterface
     public void carMode(String mode, String roadSize) {
+        pageMode = mode == null ? "off" : mode;
         CarLink.phoneMode(mode, roadSize);
         boolean connected = "on".equals(mode) || "busy".equals(mode);
         ui.post(() -> KeepAliveService.set(activity, connected));
