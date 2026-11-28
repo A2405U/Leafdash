@@ -102,6 +102,13 @@ final class SurfaceRenderer implements SurfaceCallback {
         down.recycle(); up.recycle();
     }
 
+    /** A flick on the car screen: carry on scrolling the page a little way, smoothly. */
+    @Override
+    public void onFling(float velocityX, float velocityY) {
+        if (web == null) return;
+        CarLink.run("window.scrollBy({left:" + Math.round(-velocityX * 0.25f / density) + ",top:" + Math.round(-velocityY * 0.25f / density) + ",behavior:'smooth'})");
+    }
+
     /** A swipe on the car screen, where the car passes them on: scroll the page by the same amount. */
     @Override
     public void onScroll(float distanceX, float distanceY) {

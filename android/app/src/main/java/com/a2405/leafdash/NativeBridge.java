@@ -97,9 +97,11 @@ final class NativeBridge implements BleLink.Listener {
 
     /* ---------------- Bluetooth permissions ---------------- */
     private void withPermissions(Runnable then, String id) {
-        String[] need = { Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT };
+        String[] need = android.os.Build.VERSION.SDK_INT >= 33
+                ? new String[]{ Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.POST_NOTIFICATIONS }
+                : new String[]{ Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT };
         boolean ok = true;
-        for (String p : need) ok &= activity.checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED;
+        for (String p : need) if (!p.equals(Manifest.permission.POST_NOTIFICATIONS)) ok &= activity.checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED;
         if (ok) { then.run(); return; }
         afterPermission = then;
         permissionRefused = () -> answer(id, false, "Bluetooth permission was not given");
@@ -211,6 +213,14 @@ final class NativeBridge implements BleLink.Listener {
     @JavascriptInterface
     public void toCar(String json) { CarLink.send(json); }
 
+    /** The page's connection state: tells the car screen, and keeps the app running while connected. */
+    @JavascriptInterface
+    public void carMode(String mode, String roadSize) {
+        CarLink.phoneMode(mode, roadSize);
+        boolean connected = "on".equals(mode) || "busy".equals(mode);
+        ui.post(() -> KeepAliveService.set(activity, connected));
+    }
+
     /* ---------------- offline maps (offmap.js) ---------------- */
     @JavascriptInterface
     public void mapIndex(String id) { maps.index(id); }
@@ -226,6 +236,8 @@ final class NativeBridge implements BleLink.Listener {
     public boolean bleFastLink() { return link.fastLink(); }
 
     void close() {
+        CarLink.phoneGone();
+        KeepAliveService.stopNow(activity);
         link.close();
         if (tts != null) { tts.shutdown(); tts = null; }
     }

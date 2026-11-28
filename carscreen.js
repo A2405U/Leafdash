@@ -26,22 +26,31 @@ const CAR = {
 if (!CAR.isCar && typeof window.LeafNative?.toCar === 'function') {
   const send = m => { try { window.LeafNative.toCar(JSON.stringify(m)); } catch {} };
   const carOn = () => { try { return !!window.LeafNative.carOn(); } catch { return false; } };
-  let last = {}, lastFull = 0, queued = false;
+  let last = {}, lastFull = 0, lastSent = 0, lastHb = 0;
+  const hb = () => {
+    lastHb = Date.now();
+    try { window.LeafNative.carMode?.(S.mode, SET.carZoom || 'normal'); } catch {}   // the app repeats it if the page is held back
+    send({ k: 'hb', mode: S.mode, zoom: SET.carZoom || 'normal' });
+  };
   const flush = () => {
-    queued = false;
     if (!carOn()) { last = {}; return; }
     const now = Date.now(), full = now - lastFull > 5000, d = {};
+    lastSent = now;
     for (const [k, v] of Object.entries(S.data)) {
       const j = JSON.stringify(v);                          // the cells too, for the Cells tab (they change every few seconds)
       if (full || last[k] !== j) { d[k] = v; last[k] = j; }
     }
     if (full) lastFull = now;
     if (Object.keys(d).length) send({ k: 'd', mode: S.mode, d });
+    if (now - lastHb > 1000) hb();
   };
-  LeafDash.on('data', () => { if (!queued) { queued = true; setTimeout(flush, 200); } });
+  // Sent as the data arrives (at most five times a second), not on a timer: timers are held back while the app
+  // is in the background, and the car screen would think the phone had gone.
+  LeafDash.on('data', () => { if (Date.now() - lastSent >= 200) flush(); });
   LeafDash.on('gps', g => { if (!g.fake && carOn()) send({ k: 'gps', lat: g.lat, lon: g.lon, hdg: g.hdg, spd: g.spd }); });
-  LeafDash.on('mode', m => { last = {}; lastFull = 0; if (carOn()) send({ k: 'mode', mode: m }); });
-  setInterval(() => { if (carOn()) send({ k: 'hb', mode: S.mode, zoom: SET.carZoom || 'normal' }); }, 1000);
+  LeafDash.on('mode', m => { last = {}; lastFull = 0; try { window.LeafNative.carMode?.(m, SET.carZoom || 'normal'); } catch {} if (carOn()) send({ k: 'mode', mode: m }); });
+  setInterval(() => { if (carOn() && Date.now() - lastHb > 900) hb(); }, 1000);   // while nothing is coming in
+  try { window.LeafNative.carMode?.(S.mode, SET.carZoom || 'normal'); } catch {}
 }
 
 /* ---------------- on the car screen ---------------- */

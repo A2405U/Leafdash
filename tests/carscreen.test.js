@@ -64,7 +64,7 @@ module.exports = async ({ browser, base, assert, note }) => {
   /* ---- the phone page sending ---- */
   const pctx = await browser.newContext({ viewport: { width: 412, height: 915 } });
   await pctx.addInitScript(MOCK);
-  await pctx.addInitScript(() => { window.__lat = 15; window.__sentCar = []; window.LeafNative = { carOn: () => true, toCar: s => window.__sentCar.push(JSON.parse(s)) }; });
+  await pctx.addInitScript(() => { window.__lat = 15; window.__sentCar = []; window.__carMode = []; window.LeafNative = { carOn: () => true, toCar: s => window.__sentCar.push(JSON.parse(s)), carMode: (m, z) => window.__carMode.push(m + ':' + z) }; });
   const ph = await pctx.newPage();
   ph.on('pageerror', e => errors.push('phone: ' + e.message));
   await ph.goto(base);
@@ -78,6 +78,9 @@ module.exports = async ({ browser, base, assert, note }) => {
   const cellsSent = await until(ph, () => __sentCar.some(m => m.k === 'd' && Array.isArray(m.d.cells) && m.d.cells.length === 96), 15000);
   assert.ok(cellsSent, 'the cells were not sent to the car screen (its Cells tab needs them)');
   assert.ok(sent.filter(m => m.k === 'd').every(m => m.mode === 'on'), 'data messages without the live mode');
+  // the app's own side is told the connection state (it repeats the heartbeat and keeps the app running)
+  const modes = await ph.evaluate(() => [...new Set(__carMode)]);
+  assert.ok(modes.includes('on:normal'), `the app wasn't told the phone is connected: ${modes}`);
   await pctx.close();
 
   assert.deepStrictEqual(errors, [], 'page errors');

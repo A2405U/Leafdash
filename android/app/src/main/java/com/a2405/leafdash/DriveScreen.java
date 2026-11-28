@@ -41,8 +41,14 @@ final class DriveScreen extends Screen implements DefaultLifecycleObserver {
                 .setIcon(new CarIcon.Builder(IconCompat.createWithResource(getCarContext(), R.drawable.ic_reload)).build())
                 .setOnClickListener(renderer::reload)
                 .build();
-        return new NavigationTemplate.Builder()
-                .setActionStrip(new ActionStrip.Builder().addAction(reload).build())
-                .build();
+        NavigationTemplate.Builder t = new NavigationTemplate.Builder()
+                .setActionStrip(new ActionStrip.Builder().addAction(reload).build());
+        // A movable "map": with it, Android Auto passes swipes and flicks on to SurfaceRenderer (onScroll, onFling),
+        // which scroll the page. Needs Car App API level 2 or later.
+        if (getCarContext().getCarAppApiLevel() >= 2) {
+            t.setMapActionStrip(new ActionStrip.Builder().addAction(Action.PAN).build());
+            t.setPanModeListener(isInPanMode -> { });
+        }
+        return t.build();
     }
 }

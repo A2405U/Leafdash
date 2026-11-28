@@ -53,6 +53,10 @@ const BLE_SERVICES = [
 /* ---------------- helpers ---------------- */
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+/* Let the page breathe between polling cycles without a timer. Timers are held back while the app is in the
+   background (to once a second, then once a minute after five minutes), which would stall reading the car; a
+   message to ourselves isn't. */
+const yieldUI = () => new Promise(r => { const ch = new MessageChannel(); ch.port1.onmessage = () => r(); ch.port2.postMessage(0); });
 const fmt = (v, d = 1) => (v == null || Number.isNaN(v)) ? '--' : v.toFixed(d);
 
 function readField(p, f) {
@@ -444,7 +448,7 @@ async function pollLoop() {
     if (!POLL.slowNoted && (POLL.cycles = (POLL.cycles || 0) + 1) % 60 === 0) {
       const st = elm.stats; if (st && st.n > 50 && st.ms / st.n > 150) { POLL.slowNoted = true; log(`The adapter is answering slowly (about ${Math.round(st.ms / st.n)} ms a request, usually 70–100). Battery saver can do this.`); }
     }
-    await sleep(10);                                     // just yield to the UI
+    await yieldUI();                                     // just yield to the UI (not a timer: see yieldUI)
   }
 }
 

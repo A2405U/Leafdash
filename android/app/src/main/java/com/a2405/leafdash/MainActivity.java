@@ -37,6 +37,8 @@ public class MainActivity extends Activity {
         bridge = new NativeBridge(this);
         web = WebHost.create(this, "", false, bridge);
         bridge.attach(web);
+        // keep the page's process running at full importance when the app isn't on screen (it's reading the car)
+        web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
         web.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
@@ -82,7 +84,8 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int code, String[] permissions, int[] results) {
         boolean granted = results.length > 0;
-        for (int r : results) granted &= r == PackageManager.PERMISSION_GRANTED;
+        for (int i = 0; i < results.length && i < permissions.length; i++)   // notifications are optional: only Bluetooth decides
+            if (permissions[i].startsWith("android.permission.BLUETOOTH")) granted &= results[i] == PackageManager.PERMISSION_GRANTED;
         if (code == NativeBridge.REQ_BLUETOOTH) bridge.onPermissionResult(granted);
         else if (code == REQ_LOCATION && geoCallback != null) {
             boolean any = false;
