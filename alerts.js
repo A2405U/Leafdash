@@ -1,13 +1,12 @@
 'use strict';
 /* =====================================================================
-   Gentle alerts, spoken updates and night dimming
+   Gentle alerts and spoken updates
    ---------------------------------------------------------------------
    Alerts are a quiet one-line banner under the power strip, never a
    pop-up. Each one has to stay true for a while before it shows, and a
    dismissed alert stays away until the problem has cleared.
 
    Spoken updates use the phone's own voice (off by default).
-   Night dimming darkens the whole screen while the headlights are on.
 
    Nothing here talks to the car: it only looks at values already read.
    ===================================================================== */
@@ -126,25 +125,6 @@ LeafDash.on('mode', m => {
   VO.mode = m;
 });
 
-/* ---------------- night dimming ---------------- */
-const NIGHT = { on: false, since: 0, want: false };
-function nightTick() {
-  let want = false;
-  if (SET.nightDim !== 'off') {
-    if (S.mode === 'on') want = lightBit('low') === true || lightBit('high') === true;
-    else if (S.mirror) want = !!(S.data.demoLights?.low || S.data.demoLights?.high);   // the car screen: the phone's reading
-    // in Demo the lights cycle by themselves, so only follow them when they're set by hand in the test panel
-    else if (S.mode === 'demo' && typeof DP !== 'undefined' && DP.manual) want = DP.lights.low || DP.lights.high;
-  }
-  const now = Date.now();
-  if (want !== NIGHT.want) { NIGHT.want = want; NIGHT.since = now; }
-  // wait a few seconds so a flash of the headlights or a short tunnel doesn't flicker the screen
-  if (NIGHT.on !== want && now - NIGHT.since > (want ? 3000 : 6000)) {
-    NIGHT.on = want;
-    document.body.classList.toggle('night', want);
-  }
-}
-setInterval(nightTick, 1000);
 
 /* ---------------- speed limit nudge (called by the road overlay) ---------------- */
 const NUDGE = { over: false };

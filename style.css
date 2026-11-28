@@ -537,10 +537,6 @@ label.btn { cursor: pointer; }
 .alert-bar button { flex: none; border: 0; background: none; color: var(--muted); font-size: 14px; padding: 6px 10px; border-radius: 10px; }
 @media (max-height: 520px) and (orientation: landscape) { .alert-bar { margin-bottom: 6px; padding: 4px 6px 4px 12px; } }
 
-/* ---------------- night dimming: the whole screen darkens while the headlights are on ---------------- */
-body::after { content: ''; position: fixed; inset: 0; z-index: 90; background: #000; opacity: 0; pointer-events: none; transition: opacity 2.5s ease; }
-body.night::after { opacity: .45; }
-
 /* ---------------- speed limit nudge ---------------- */
 .road-sign.over { animation: signPulse 1.1s ease-in-out infinite; }
 @keyframes signPulse {

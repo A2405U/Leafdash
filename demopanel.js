@@ -95,7 +95,7 @@ function dpRender() {
         ${sl('kw', 'Power', -50, 110, 1, ' kW')}
         ${sl('soc', 'Charge', 0, 100, 1, '%')}
         ${sl('temp', 'Battery temp', -10, 50, 1, '°C')}
-        <p class="hint">Dipped or Main beam dims the screen after a few seconds (night dimming). Warp needs ECO off, Drive, and a high Power value (with warp set to Auto).</p>
+        <p class="hint">Warp needs ECO off, Drive, and a high Power value (with warp set to Auto).</p>
       </div>`,
     sim: `
       <div class="label">Adapter</div>
