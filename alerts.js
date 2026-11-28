@@ -132,6 +132,7 @@ function nightTick() {
   let want = false;
   if (SET.nightDim !== 'off') {
     if (S.mode === 'on') want = lightBit('low') === true || lightBit('high') === true;
+    else if (S.mirror) want = !!(S.data.demoLights?.low || S.data.demoLights?.high);   // the car screen: the phone's reading
     // in Demo the lights cycle by themselves, so only follow them when they're set by hand in the test panel
     else if (S.mode === 'demo' && typeof DP !== 'undefined' && DP.manual) want = DP.lights.low || DP.lights.high;
   }

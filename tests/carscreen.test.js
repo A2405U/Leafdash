@@ -32,6 +32,11 @@ module.exports = async ({ browser, base, assert, note }) => {
   await page.evaluate(() => { __hb = 'on'; __leafFromPhone(JSON.stringify({ k: 'd', mode: 'on', d: { speed: 48.3, gear: 'D', kw: 21.5, soc: 64.2 } })); });
   const live = await until(page, () => S.mirror && S.mode === 'demo' && $('spd').textContent === '30' && { spd: $('spd').textContent, src: $('spdSrc').textContent, kw: $('kw').textContent, drt: typeof DRT !== 'undefined' && DRT.on }, 4000);
   assert.ok(live && !/demo/.test(live.src) && /^2[12]$/.test(live.kw) && !live.drt, `live on the car screen: ${JSON.stringify(live) || await page.evaluate(() => $('spd').textContent)}`);
+  // what the phone works out beside the raw values: lamps (headlights etc. aren't in S.data) and trip totals;
+  // and the real driving history, not Demo's
+  await page.evaluate(() => __leafFromPhone(JSON.stringify({ k: 'd', mode: 'on', d: { speed: 48.3 }, x: { lights: { low: true, high: false, tail: true, fog: false, brake: false, reverse: false, indL: false, indR: false }, trip: { used: 3.21, regen: 0.4, peak: 55, peakRegen: 20, since: 1 } } })));
+  const extra = await page.evaluate(() => ({ low: carLights(S.data).low, tail: carLights(S.data).tail, used: T.used, hisDemo: HIS.demo }));
+  assert.ok(extra.low === true && extra.tail === true && Math.abs(extra.used - 3.21) < 0.05 && extra.hisDemo === false, `lamps, trip or history not the phone's: ${JSON.stringify(extra)}`);
   await sleep(1200);                                           // the car's own demo generator must not overwrite it
   assert.strictEqual(await page.evaluate(() => $('spd').textContent), '30', 'the phone\'s speed was overwritten');
 
@@ -75,6 +80,7 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(sent, 'the phone sent nothing to the car screen');
   const kinds = [...new Set(sent.map(m => m.k))].sort();
   assert.ok(kinds.includes('mode') && kinds.includes('d') && kinds.includes('hb'), `kinds sent: ${kinds}`);
+  assert.ok(sent.some(m => m.k === 'd' && m.x && m.x.lights && typeof m.x.lights.tail === 'boolean' && m.x.trip), 'the phone did not send its lamps and trip totals');
   const cellsSent = await until(ph, () => __sentCar.some(m => m.k === 'd' && Array.isArray(m.d.cells) && m.d.cells.length === 96), 15000);
   assert.ok(cellsSent, 'the cells were not sent to the car screen (its Cells tab needs them)');
   assert.ok(sent.filter(m => m.k === 'd').every(m => m.mode === 'on'), 'data messages without the live mode');
@@ -84,5 +90,5 @@ module.exports = async ({ browser, base, assert, note }) => {
   await pctx.close();
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`car page: message → own Demo → phone's live values (30 mph, no demo label) → message again; menu without Debug; ▲ ▼ page buttons; clear of AA's bar; saves nothing. ▲ ▼ page the Dash tab. Phone sends ${sent.length} messages (${kinds}) and the cells`);
+  note(`car page: message → own Demo → phone's live values (30 mph, no demo label, its lamps and trip totals, real history) → message again; menu without Debug; ▲ ▼ page buttons; clear of AA's bar; saves nothing. ▲ ▼ page the Dash tab. Phone sends ${sent.length} messages (${kinds}) and the cells`);
 };

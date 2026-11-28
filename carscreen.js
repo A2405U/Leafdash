@@ -26,7 +26,7 @@ const CAR = {
 if (!CAR.isCar && typeof window.LeafNative?.toCar === 'function') {
   const send = m => { try { window.LeafNative.toCar(JSON.stringify(m)); } catch {} };
   const carOn = () => { try { return !!window.LeafNative.carOn(); } catch { return false; } };
-  let last = {}, lastFull = 0, lastSent = 0, lastHb = 0;
+  let last = {}, lastFull = 0, lastSent = 0, lastHb = 0, lastX = '';
   const hb = () => {
     lastHb = Date.now();
     try { window.LeafNative.carMode?.(S.mode, SET.carZoom || 'normal'); } catch {}   // the app repeats it if the page is held back
@@ -41,7 +41,13 @@ if (!CAR.isCar && typeof window.LeafNative?.toCar === 'function') {
       if (full || last[k] !== j) { d[k] = v; last[k] = j; }
     }
     if (full) lastFull = now;
-    if (Object.keys(d).length) send({ k: 'd', mode: S.mode, d });
+    // what the phone works out beside the raw values, so the car screen shows the same: the lamps (headlights,
+    // fog, indicators, brake…, from readings kept outside S.data) and the trip totals for the Energy tab
+    const x = { lights: carLights(S.data), trip: { used: T.used, regen: T.regen, peak: T.peak, peakRegen: T.peakRegen, since: T.since } };
+    const xj = JSON.stringify(x);
+    const msg = { k: 'd', mode: S.mode, d };
+    if (full || xj !== lastX) { msg.x = x; lastX = xj; }
+    if (Object.keys(d).length || msg.x) send(msg);
     if (now - lastHb > 1000) hb();
   };
   // Sent as the data arrives (at most five times a second), not on a timer: timers are held back while the app
@@ -70,6 +76,7 @@ function carGoLive() {
   S.mirror = true;                  // tells the demo route not to start, and the speed it's the car's
   setMode('demo');                  // draws like Demo (nothing polls, nothing is saved), fed by the phone
   CAR.live = true;
+  if (typeof hisLoad === 'function') hisLoad();   // the real driving history (range, costs), not Demo's
   carMsg(null);
 }
 function carLeaveLive() {
@@ -99,6 +106,8 @@ window.__leafFromPhone = text => {
   CAR.phoneAt = Date.now();
   if (m.k === 'd' && CAR.live && m.d) {
     Object.assign(S.data, m.d);
+    if (m.x?.lights) S.data.demoLights = m.x.lights;         // the phone's lamps, used by carLights() on this page
+    if (m.x?.trip) Object.assign(T, m.x.trip);              // the phone's trip totals for the Energy tab
     S.lastUpdate = Date.now();
     render();
     LeafDash.emit('data', S.data);
@@ -148,6 +157,7 @@ if (CAR.isCar) {
   };
   setInterval(pagerTick, 400); addEventListener('scroll', pagerTick, { passive: true });
   carMsg(['Open Leaf Dash on your phone', 'The car screen shows what the phone app reads from the car.']);
+  setInterval(() => { if (CAR.live && typeof hisLoad === 'function') hisLoad(); }, 60000);   // the phone keeps it up to date
   setInterval(() => {
     if (CAR.phoneMode != null && Date.now() - CAR.phoneAt > 4000) {
       CAR.phoneMode = null; carLeaveLive(); carStopDemo();
