@@ -78,10 +78,14 @@ final class SurfaceRenderer implements SurfaceCallback {
         sendArea();
     }
 
-    /** The part of the surface not covered by Android Auto's own bars, as insets in the page's pixels. */
+    /**
+     * The part of the surface not covered by Android Auto's own bars, as insets in the page's pixels. The top is
+     * left out on purpose: Android Auto's round buttons there come and go (they fade after a few seconds), and the
+     * page wasn't always told when they went, which left an empty band at the top until a reload.
+     */
     private void sendArea() {
         if (web == null || visible == null || visible.isEmpty()) return;
-        int l = Math.round(visible.left / density), t = Math.round(visible.top / density);
+        int l = Math.round(visible.left / density), t = 0;
         int r = Math.round((width - visible.right) / density), b = Math.round((height - visible.bottom) / density);
         CarLink.run("window.__leafCarArea&&window.__leafCarArea(" + l + "," + t + "," + r + "," + b + ")");
     }
@@ -98,9 +102,11 @@ final class SurfaceRenderer implements SurfaceCallback {
         down.recycle(); up.recycle();
     }
 
-    /** Android Auto's ☰ button: open or close the Leaf Dash menu. */
-    void toggleMenu() {
-        CarLink.run("window.__leafCarMenu&&window.__leafCarMenu()");
+    /** A swipe on the car screen, where the car passes them on: scroll the page by the same amount. */
+    @Override
+    public void onScroll(float distanceX, float distanceY) {
+        if (web == null) return;
+        CarLink.run("window.scrollBy(" + Math.round(distanceX / density) + "," + Math.round(distanceY / density) + ")");
     }
 
     /** The button on the car screen: load the page again. */

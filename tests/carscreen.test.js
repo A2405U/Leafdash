@@ -3,7 +3,8 @@
    Car page: "Open Leaf Dash on your phone" until the phone speaks; its own Demo when the phone is in Demo; the
    phone's live values when it's connected; the ☰ menu without Debug; Android Auto's insets; never saves anything;
    back to the message when the phone goes quiet.
-   Phone page: with a car screen showing, sends the car's values (not the cells), its mode and a heartbeat. */
+   Phone page: with a car screen showing, sends the car's values (cells included, for the Cells tab), its mode and
+   a heartbeat. */
 const { MOCK } = require('./mock-adapter.js');
 const { sleep, until } = require('./helpers.js');
 
@@ -42,7 +43,13 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(menu.sceneBottom <= 480 - 66 + 1, `the drive scene runs under Android Auto's bar (bottom ${menu.sceneBottom})`);
   await page.click('.tabs button[data-view="dash"]');
   assert.ok(await page.evaluate(() => S.view === 'dash' && !document.body.classList.contains('car-menu')), 'a tab in the menu did not switch the view and close the menu');
+  // ▲ ▼ page through a tab taller than the screen (Android Auto passes taps, not swipes)
+  const pg = await until(page, () => !document.querySelector('.car-pager').classList.contains('hidden') && document.querySelector('.car-pager [data-p="-1"]').disabled && true, 3000);
+  assert.ok(pg, 'no page buttons on the Dash tab');
+  await page.click('.car-pager [data-p="1"]');
+  assert.ok(await until(page, () => scrollY > 100, 3000), 'the ▼ button did not scroll down');
   await page.evaluate(() => showView('drive'));
+  assert.ok(await until(page, () => document.querySelector('.car-pager').classList.contains('hidden'), 2000), 'page buttons showing on the Drive tab');
 
   // nothing saved, no voice of its own
   const kept = await page.evaluate(() => { try { saveSettings(); } catch {} return { voice: JSON.parse(localStorage.getItem('leafdash.settings')).voice, restoring: window.LD_RESTORING }; });
@@ -68,10 +75,11 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(sent, 'the phone sent nothing to the car screen');
   const kinds = [...new Set(sent.map(m => m.k))].sort();
   assert.ok(kinds.includes('mode') && kinds.includes('d') && kinds.includes('hb'), `kinds sent: ${kinds}`);
-  assert.ok(!sent.some(m => m.k === 'd' && 'cells' in m.d), 'cells were sent to the car screen');
+  const cellsSent = await until(ph, () => __sentCar.some(m => m.k === 'd' && Array.isArray(m.d.cells) && m.d.cells.length === 96), 15000);
+  assert.ok(cellsSent, 'the cells were not sent to the car screen (its Cells tab needs them)');
   assert.ok(sent.filter(m => m.k === 'd').every(m => m.mode === 'on'), 'data messages without the live mode');
   await pctx.close();
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`car page: message → own Demo → phone's live values (30 mph, no demo label) → message again; menu without Debug; clear of AA's bar; saves nothing. Phone sends ${sent.length} messages (${kinds}), no cells`);
+  note(`car page: message → own Demo → phone's live values (30 mph, no demo label) → message again; menu without Debug; ▲ ▼ page buttons; clear of AA's bar; saves nothing. ▲ ▼ page the Dash tab. Phone sends ${sent.length} messages (${kinds}) and the cells`);
 };

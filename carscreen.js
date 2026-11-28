@@ -32,8 +32,7 @@ if (!CAR.isCar && typeof window.LeafNative?.toCar === 'function') {
     if (!carOn()) { last = {}; return; }
     const now = Date.now(), full = now - lastFull > 5000, d = {};
     for (const [k, v] of Object.entries(S.data)) {
-      if (k === 'cells') continue;                          // 96 numbers the car screen doesn't need
-      const j = JSON.stringify(v);
+      const j = JSON.stringify(v);                          // the cells too, for the Cells tab (they change every few seconds)
       if (full || last[k] !== j) { d[k] = v; last[k] = j; }
     }
     if (full) lastFull = now;
@@ -124,7 +123,21 @@ if (CAR.isCar) {
   btn.innerHTML = '<i></i><i></i><i></i>';
   btn.addEventListener('click', () => window.__leafCarMenu());
   document.body.appendChild(btn);
-  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => window.__leafCarMenu(false)));
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { window.__leafCarMenu(false); scrollTo(0, 0); }));
+  // ▲ ▼: page through Dash, Energy and Cells (Android Auto passes taps on, but not swipes)
+  const pager = document.createElement('div');
+  pager.className = 'car-pager hidden';
+  pager.innerHTML = '<button data-p="-1" aria-label="Up">▲</button><button data-p="1" aria-label="Down">▼</button>';
+  pager.addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) scrollBy({ top: +b.dataset.p * innerHeight * 0.6, behavior: 'smooth' }); });
+  document.body.appendChild(pager);
+  const pagerTick = () => {
+    const more = S.view !== 'drive' && document.documentElement.scrollHeight > innerHeight + 4;
+    pager.classList.toggle('hidden', !more);
+    if (!more) return;
+    pager.children[0].disabled = scrollY < 4;
+    pager.children[1].disabled = scrollY + innerHeight >= document.documentElement.scrollHeight - 4;
+  };
+  setInterval(pagerTick, 400); addEventListener('scroll', pagerTick, { passive: true });
   carMsg(['Open Leaf Dash on your phone', 'The car screen shows what the phone app reads from the car.']);
   setInterval(() => {
     if (CAR.phoneMode != null && Date.now() - CAR.phoneAt > 4000) {

@@ -638,7 +638,7 @@ body.car-screen {
 }
 .car-screen .top, .car-screen #connectBar, .car-screen #noBt, .car-screen #btnDriveSettings, .car-screen .drive-side,
 .car-screen .drive-info, .car-screen #demoFab, .car-screen #demoPanel, .car-screen #rpBar, .car-screen .ps-badges,
-.car-screen .ps-scale, .car-screen .tabs button[data-view="debug"] { display: none !important; }
+.car-screen .ps-scale, .car-screen .tabs button[data-view="debug"], .car-screen #btnDashEdit { display: none !important; }
 
 /* power: the reading on the left, the bar filling the rest of the row */
 .car-screen .powerstrip { position: static; display: flex; align-items: center; gap: 14px; margin: 0 0 6px 56px; padding: 6px 6px 6px; border: 0; background: none; }
@@ -687,3 +687,14 @@ body.car-screen {
 }
 .car-msg b { display: block; font-size: clamp(24px, 8vh, 40px); margin-bottom: 10px; }
 .car-msg span { color: var(--muted); font-size: clamp(16px, 4.5vh, 22px); }
+
+/* ▲ ▼ on Dash, Energy and Cells, and shorter graphs, on the car screen */
+.car-screen .car-pager {
+  position: fixed; z-index: 27; right: calc(var(--car-r, 0px) + 8px); top: calc((100vh - var(--car-b, 0px)) / 2);
+  transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px;
+}
+.car-screen .car-pager button { width: 58px; height: 58px; border-radius: 16px; border: 1px solid var(--line); background: rgba(18,25,33,.95); color: var(--text); font-size: 22px; }
+.car-screen .car-pager button:disabled { opacity: .3; }
+.car-screen #view-dash, .car-screen #view-energy, .car-screen #view-cells { margin-right: 70px; }
+.car-screen #energyChart { height: 180px; }
+.car-screen #cellChart { height: 200px; }

@@ -35,17 +35,14 @@ final class DriveScreen extends Screen implements DefaultLifecycleObserver {
     @NonNull
     @Override
     public Template onGetTemplate() {
-        // Android Auto's own buttons always work, on every car: ☰ opens the Leaf Dash menu, the other reloads.
-        Action menu = new Action.Builder()
-                .setIcon(new CarIcon.Builder(IconCompat.createWithResource(getCarContext(), R.drawable.ic_menu)).build())
-                .setOnClickListener(renderer::toggleMenu)
-                .build();
+        // Android Auto needs at least one button of its own here (it fades after a few seconds). Taps reach the page,
+        // so the page's own ☰ opens the menu; this one reloads the car screen if it ever gets stuck.
         Action reload = new Action.Builder()
                 .setIcon(new CarIcon.Builder(IconCompat.createWithResource(getCarContext(), R.drawable.ic_reload)).build())
                 .setOnClickListener(renderer::reload)
                 .build();
         return new NavigationTemplate.Builder()
-                .setActionStrip(new ActionStrip.Builder().addAction(menu).addAction(reload).build())
+                .setActionStrip(new ActionStrip.Builder().addAction(reload).build())
                 .build();
     }
 }
