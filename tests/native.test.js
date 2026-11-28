@@ -141,6 +141,16 @@ module.exports = async ({ browser, base, assert, note }) => {
   });
   assert.deepStrictEqual(jobs, { early: 0, due: 1 }, `background nudge ran the jobs wrongly: ${JSON.stringify(jobs)}`);
 
+  // parked in the background (ParkedHost): the Drive animation pauses, and starts again when back on screen
+  const park = await page.evaluate(async () => {
+    showView('drive'); await new Promise(r => setTimeout(r, 300));
+    window.__leafParked(true); await new Promise(r => setTimeout(r, 300));
+    const stopped = DR.raf == null;
+    window.__leafParked(false); await new Promise(r => setTimeout(r, 300));
+    return { stopped, running: DR.raf != null, mode: S.mode };
+  });
+  assert.ok(park.stopped && park.running && park.mode === 'on', `parking: ${JSON.stringify(park)}`);
+
   // spoken update and a backup file
   await page.evaluate(() => { say('Battery at 50%', true); bkSave(false); });
   const files = await until(page, () => window.__native.saved.length && window.__native);
@@ -161,6 +171,6 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(auto, 'did not connect by itself when the app opened');
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; repeating jobs run from the app's nudge in the background; voice, backup file, reconnect and auto-connect work`);
+  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; repeating jobs run from the app's nudge in the background; parking pauses only the Drive animation; voice, backup file, reconnect and auto-connect work`);
   await ctx.close();
 };
