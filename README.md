@@ -145,7 +145,7 @@ The Android app shows a Drive screen on the car's display through Android Auto. 
 - **Layout:** made for small wide screens like 800 × 480: big speed and gear, the power reading beside its bar, the road, and no widgets. The tabs (Drive, Dash, Energy, Cells; never Debug) open from **☰**. Android Auto passes taps on but not swipes, so **▲ ▼** on the right page through tabs taller than the screen. Where the car passes swipes on, they scroll too.
 - **Road size:** Small, Normal or Large (Settings → Drive screen → Car screen road size, in the Android app). With no widgets under the road, the road and car are drawn bigger than on the phone.
 - **States:** "Open Leaf Dash on your phone" when the phone app isn't open; "Not connected" or "Connecting…" while the phone isn't connected; its own Demo when the phone is in Demo.
-- **In the background:** while connected, the app shows a "Leaf Dash is reading the car" notification and keeps reading, and following the GPS for the road, with the screen off or another app in front. The car screen only says "Open Leaf Dash on your phone" once the app is closed.
+- **In the background:** while connected, the app shows a "Leaf Dash is reading the car" notification and keeps reading, following the GPS for the road, and running everything else (drive recorder, trip and range counting, charge log, alerts, the car screen) with the screen off or another app in front. The car screen only says "Open Leaf Dash on your phone" once the app is closed.
 - The car screen only shows; it never saves settings or history.
 
 ## Alerts and driving aids (Settings → Alerts and driving aids)

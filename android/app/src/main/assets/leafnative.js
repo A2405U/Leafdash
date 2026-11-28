@@ -15,6 +15,30 @@
   if (!N || window.__leafNativeReady) return;
   window.__leafNativeReady = true;
 
+  /* ---------- repeating jobs while the app is in the background ---------- */
+  // Android holds back a hidden page's timers (to once a second, then once a minute), which would stop the drive
+  // recorder, trip and range counting, the charge log, alerts and the car screen's updates. Every setInterval is
+  // also run from here: while the app isn't on screen, the app calls __leafNativeTick twice a second (a call from
+  // the app isn't held back), and any job that's due runs. On screen, the ordinary timers run as before.
+  const realSetInterval = window.setInterval.bind(window), realClearInterval = window.clearInterval.bind(window);
+  const jobs = new Map();
+  window.setInterval = (fn, ms, ...args) => {
+    if (typeof fn !== 'function') return realSetInterval(fn, ms, ...args);
+    const job = { fn, args, ms: Math.max(+ms || 0, 50), last: Date.now() };
+    job.id = realSetInterval(() => { job.last = Date.now(); fn(...args); }, ms);
+    jobs.set(job.id, job);
+    return job.id;
+  };
+  window.clearInterval = id => { jobs.delete(id); realClearInterval(id); };
+  window.__leafNativeTick = () => {
+    const now = Date.now();
+    for (const job of [...jobs.values()]) {
+      if (now - job.last < job.ms) continue;
+      job.last = now;
+      try { job.fn(...job.args); } catch (e) { console.error(e); }
+    }
+  };
+
   /* ---------- calls and answers ---------- */
   let seq = 0;
   const waiting = new Map();

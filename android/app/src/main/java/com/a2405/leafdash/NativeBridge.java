@@ -212,6 +212,20 @@ final class NativeBridge implements BleLink.Listener {
     @JavascriptInterface
     public void bleDisconnect() { link.disconnect(); }
 
+    /* ---------------- the page's repeating jobs while the app is in the background ---------------- */
+    private final Runnable tick = new Runnable() {
+        @Override public void run() {
+            NativeBridge.this.run("window.__leafNativeTick&&window.__leafNativeTick()");
+            ui.postDelayed(this, 500);
+        }
+    };
+
+    /** The app went into the background (true) or came back (false): see leafnative.js, __leafNativeTick. */
+    void background(boolean hidden) {
+        ui.removeCallbacks(tick);
+        if (hidden) ui.postDelayed(tick, 500);
+    }
+
     /* ---------------- location (leafnative.js: navigator.geolocation) ---------------- */
     @JavascriptInterface
     public void gpsStart() {
@@ -268,6 +282,7 @@ final class NativeBridge implements BleLink.Listener {
     void close() {
         CarLink.phoneGone();
         CarLink.phone(null);
+        ui.removeCallbacks(tick);
         KeepAliveService.stopNow(activity);
         gps.stop();
         link.close();

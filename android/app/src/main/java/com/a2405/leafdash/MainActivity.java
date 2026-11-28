@@ -115,6 +115,18 @@ public class MainActivity extends Activity {
     public void onBackPressed() { back(); }   // Android 12, before the new back handling
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (bridge != null) bridge.background(false);
+    }
+
+    @Override
+    protected void onStop() {
+        if (bridge != null) bridge.background(true);   // keep the page's repeating jobs going (NativeBridge)
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
         bridge.close();
         web.destroy();

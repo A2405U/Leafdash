@@ -130,6 +130,17 @@ module.exports = async ({ browser, base, assert, note }) => {
   });
   assert.ok(fix.started && fix.got.some(g => g[0] === 51.5001 && g[2] === 12.5), `GPS through the app: ${JSON.stringify(fix)}`);
 
+  // repeating jobs still run with the app in the background, from the app's nudge (timers are held back there)
+  const jobs = await page.evaluate(() => {
+    let n = 0; const id = setInterval(() => n++, 60000);
+    window.__leafNativeTick(); const early = n;                          // not due yet
+    const now = Date.now; Date.now = () => now() + 61000;
+    window.__leafNativeTick(); window.__leafNativeTick(); const due = n;   // due: runs once, not twice
+    Date.now = now; clearInterval(id);
+    return { early, due };
+  });
+  assert.deepStrictEqual(jobs, { early: 0, due: 1 }, `background nudge ran the jobs wrongly: ${JSON.stringify(jobs)}`);
+
   // spoken update and a backup file
   await page.evaluate(() => { say('Battery at 50%', true); bkSave(false); });
   const files = await until(page, () => window.__native.saved.length && window.__native);
@@ -150,6 +161,6 @@ module.exports = async ({ browser, base, assert, note }) => {
   assert.ok(auto, 'did not connect by itself when the app opened');
 
   assert.deepStrictEqual(errors, [], 'page errors');
-  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; voice, backup file, reconnect and auto-connect work`);
+  note(`read-only lists match (${j.at.length} AT + ${j.other.length}); connected, values live, write refused by the native guard; fast link asked for on connect and again when slow; GPS from the app; repeating jobs run from the app's nudge in the background; voice, backup file, reconnect and auto-connect work`);
   await ctx.close();
 };
