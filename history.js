@@ -168,7 +168,7 @@ setInterval(() => {
 }, 2000);
 
 LeafDash.on('mode', m => {
-  if (m === 'demo') hisDemo();
+  if (m === 'demo' && !S.mirror) hisDemo();             // the car screen following a live phone uses the real history
   else if (HIS.demo) hisLoad();
   if (m !== 'on') { hisConnAt = 0; HIS.checked = false; HIS.live = null; }
   HIS.sig = '';

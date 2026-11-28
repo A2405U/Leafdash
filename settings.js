@@ -19,7 +19,6 @@ const SET_DEFAULTS = {
   layout: null,                                    // dashboard widgets (see dashboard.js)
   alerts: true,                                    // gentle alert banner (tyres, hot battery, cell drift, 12 V)
   voice: false,                                    // spoken updates
-  nightDim: 'auto',                                // dim the screen with the headlights: 'auto' | 'off'
   limitNudge: true,                                // pulse the speed-limit sign when over it
   cameras: true,                                   // speed and red-light cameras from OpenStreetMap on the Drive screen
   autoReconnect: true,                             // get back to the adapter by itself
@@ -159,8 +158,6 @@ function openSettings(section) {
         <input type="checkbox" data-sw="limitNudge" ${SET.limitNudge !== false ? 'checked' : ''}></label>
       <label class="switch-row"><span>Cameras <span class="mini">speed and red-light cameras mapped on OpenStreetMap, shown ahead (and spoken, with spoken updates on). Needs the real road shape</span></span>
         <input type="checkbox" data-sw="cameras" ${SET.cameras !== false ? 'checked' : ''}></label>
-      <label class="switch-row"><span>Dim the screen at night <span class="mini">while the headlights are on</span></span>
-        <input type="checkbox" data-night ${SET.nightDim !== 'off' ? 'checked' : ''}></label>
       <label class="switch-row"><span>Spoken updates <span class="mini">battery milestones, charging started and stopped, alerts</span></span>
         <input type="checkbox" data-sw="voice" ${SET.voice ? 'checked' : ''}></label>
       <button class="btn ghost small" data-a="testVoice">Test the voice</button>
@@ -250,7 +247,6 @@ function openSettings(section) {
   box.querySelector('[data-osmc-clear]')?.addEventListener('click', async () => { await osmcClear(); osmcShow(); });
   if (typeof offmapSummary === 'function') offmapSummary();
   box.querySelector('[data-off-open]')?.addEventListener('click', () => offmapSheet());
-  box.querySelector('[data-night]').onchange = e => { SET.nightDim = e.target.checked ? 'auto' : 'off'; saveSettings(); };
   box.querySelector('[data-a=testVoice]').onclick = () => {
     if (!window.speechSynthesis) return alert('This browser has no built-in voice.');
     say('Battery 20 percent. About 25 miles left.', true);

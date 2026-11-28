@@ -142,16 +142,16 @@ Download the counties you drive in (England by county, plus Scotland and Wales),
 
 The Android app shows a Drive screen on the car's display through Android Auto. The phone keeps the one connection to the adapter and passes the car's values and its GPS to the car screen a few times a second, so there's nothing to connect on the car: connect on the phone, and the car screen follows.
 
-- **Layout:** made for small wide screens like 800 × 480: big speed and gear, the power reading beside its bar, the road, and no widgets. The tabs (Drive, Dash, Energy, Cells; never Debug) open from **☰**, on the screen or in Android Auto's own buttons.
+- **Layout:** made for small wide screens like 800 × 480: big speed and gear, the power reading beside its bar, the road, and no widgets. The tabs (Drive, Dash, Energy, Cells; never Debug) open from **☰**. Android Auto passes taps on but not swipes, so **▲ ▼** on the right page through tabs taller than the screen. Where the car passes swipes on, they scroll too.
 - **Road size:** Small, Normal or Large (Settings → Drive screen → Car screen road size, in the Android app). With no widgets under the road, the road and car are drawn bigger than on the phone.
 - **States:** "Open Leaf Dash on your phone" when the phone app isn't open; "Not connected" or "Connecting…" while the phone isn't connected; its own Demo when the phone is in Demo.
-- **Limits:** the phone app has to stay open (on screen) for now. The car screen only shows; it never saves settings or history.
+- **In the background:** while connected, the app shows a "Leaf Dash is reading the car" notification and keeps reading with the screen off or another app in front. The car screen only says "Open Leaf Dash on your phone" once the app is closed.
+- The car screen only shows; it never saves settings or history.
 
 ## Alerts and driving aids (Settings → Alerts and driving aids)
 
 - **Gentle alerts:** one quiet line under the power bar, never a pop-up. It shows for a tyre that's low or well below the others, a hot battery (45°C and up), one cell drifting from the rest at rest, or a low 12 V battery. Each has to stay true for a while first, and a dismissed alert stays away until the problem clears.
 - **Speed limit nudge:** with the real road shape on, the limit sign pulses when you're more than 3 mph over.
-- **Night dimming:** the whole screen darkens a few seconds after the headlights come on.
 - **Spoken updates** (off by default): battery milestones on the way down (50, 30, 20, 15, 10, 5%), charging started and stopped, 80% and full, alerts, and the adapter connecting or dropping.
 - **Reconnect by itself:** if the link drops, the app tries again by itself for a few minutes. When you open the app it also looks for the adapter used last time, where the browser supports remembering Bluetooth devices; otherwise tap Connect as before.
 
@@ -293,7 +293,7 @@ The bundled MQTT library (`vendor/mqtt.min.js`) keeps its own MIT licence ([`ven
 | `maptools/` | Builds the offline map packs from OpenStreetMap (run weekly by GitHub Actions) |
 | `driverec.js` | Drive recorder: everything on a drive, into one file |
 | `history.js` | Recent efficiency and range, charge log and costs, battery health trend |
-| `alerts.js` | Gentle alerts, spoken updates, night dimming, speed limit nudge |
+| `alerts.js` | Gentle alerts, spoken updates, speed limit nudge |
 | `backup.js` | Backup file, restore, and asking the browser to keep the data |
 | `addons.js` | Add-on framework, Home Assistant, MQTT and ABRP |
 | `didscan.js` | Mode scanner (Developer mode, read-only) |
